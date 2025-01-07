@@ -30,7 +30,7 @@ export const AddCategoryController = async(request,response)=>{
         }
 
         return response.json({
-            message : "Add Category",
+            message : "Category has been created",
             data : saveCategory,
             success : true,
             error : false
@@ -117,7 +117,7 @@ export const deleteCategoryController = async(request,response)=>{
         const deleteCategory = await CategoryModel.deleteOne({ _id : _id})
 
         return response.json({
-            message : "Delete category successfully",
+            message : "Category deleted successfully",
             data : deleteCategory,
             error : false,
             success : true

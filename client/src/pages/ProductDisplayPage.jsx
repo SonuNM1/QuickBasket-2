@@ -13,6 +13,7 @@ import { pricewithDiscount } from '../utils/PriceWithDiscount'
 import AddToCartButton from '../components/AddToCartButton'
 
 const ProductDisplayPage = () => {
+
   const params = useParams()
   let productId = params?.product?.split("-")?.slice(-1)[0]
   const [data,setData] = useState({
@@ -102,7 +103,8 @@ const ProductDisplayPage = () => {
             <div>
             </div>
 
-            <div className='my-4  hidden lg:grid gap-3 '>
+          
+            {/* <div className='my-4  hidden lg:grid gap-3 '>
                 <div>
                     <p className='font-semibold'>Description</p>
                     <p className='text-base'>{data.description}</p>
@@ -121,7 +123,8 @@ const ProductDisplayPage = () => {
                     )
                   })
                 }
-            </div>
+            </div> */}
+            
         </div>
 
 

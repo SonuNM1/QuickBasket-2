@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 const productSchema = new mongoose.Schema({
     name : {
         type : String,
+        required: [true, 'Product name is required']
     },
     image : {
         type : Array,
@@ -26,11 +27,13 @@ const productSchema = new mongoose.Schema({
     },
     stock : {
         type : Number,
-        default : null
+        default : null,
+        min: [0, 'Stock cannot be negative']
     },
     price : {
         type : Number,
-        defualt : null
+        default : null,
+        min: [0, 'Price cannot be negative']
     },
     discount : {
         type : Number,
@@ -56,10 +59,14 @@ const productSchema = new mongoose.Schema({
 productSchema.index({
     name  : "text",
     description : 'text'
-},{
-    name : 10,
-    description : 5
-})
+},
+{
+    weights: {
+        name : 10,
+        description : 5
+    }
+}
+)
 
 
 const ProductModel = mongoose.model('product',productSchema)

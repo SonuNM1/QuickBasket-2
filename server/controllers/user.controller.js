@@ -211,35 +211,71 @@ export async function logoutController(request,response){
 }
 
 //upload user avatar
-export async  function uploadAvatar(request,response){
-    try {
-        const userId = request.userId // auth middlware
-        const image = request.file  // multer middleware
 
-        const upload = await uploadImageClodinary(image)
-        
-        const updateUser = await UserModel.findByIdAndUpdate(userId,{
-            avatar : upload.url
-        })
+export async function uploadAvatar(request, response) {
+    try {
+        // Log userId from auth middleware
+        const userId = request.userId; // auth middleware
+        console.log("User ID from auth middleware:", userId);
+
+        // Log the file received by multer
+        const image = request.file; // multer middleware
+        console.log("File received by multer:", image);
+
+        // Check if no file is provided
+        if (!image) {
+            return response.status(400).json({
+                message: "No file uploaded.",
+                error: true,
+                success: false,
+            });
+        }
+
+        // Log before uploading to Cloudinary
+        console.log("Uploading file to Cloudinary...");
+        const upload = await uploadImageClodinary(image);
+        console.log("Cloudinary upload result:", upload);
+
+        // Log before updating user in the database
+        console.log("Updating user in the database...");
+        const updateUser = await UserModel.findByIdAndUpdate(userId, {
+            avatar: upload.url,
+        }, { new: true });
+
+        // Check if user update was successful
+        if (!updateUser) {
+            return response.status(404).json({
+                message: "User not found.",
+                error: true,
+                success: false,
+            });
+        }
+
+        // Log success response
+        console.log("Avatar upload successful for user:", userId);
 
         return response.json({
-            message : "upload profile",
-            success : true,
-            error : false,
-            data : {
-                _id : userId,
-                avatar : upload.url
-            }
-        })
+            message: "Profile uploaded successfully",
+            success: true,
+            error: false,
+            data: {
+                _id: userId,
+                avatar: upload.url,
+            },
+        });
 
     } catch (error) {
+        // Log the error
+        console.error("Error in uploadAvatar controller:", error);
+
         return response.status(500).json({
-            message : error.message || error,
-            error : true,
-            success : false
-        })
+            message: error.message || error,
+            error: true,
+            success: false,
+        });
     }
 }
+
 
 //update user details
 export async function updateUserDetails(request,response){

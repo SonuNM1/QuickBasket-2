@@ -1,1 +1,1 @@
-# Binkeyit Full Stack MERN App
+# localBazar Full Stack MERN App

@@ -1,12 +1,12 @@
 import jwt from 'jsonwebtoken'
 
-const auth = async(request,response,next)=>{
+const auth = async (request,response,next)=>{
     try {
         const token = request.cookies.accessToken || request?.headers?.authorization?.split(" ")[1]
        
         if(!token){
             return response.status(401).json({
-                message : "Provide token"
+                message : "Please login first!"
             })
         }
 
@@ -25,8 +25,10 @@ const auth = async(request,response,next)=>{
         next()
 
     } catch (error) {
+        console.log('Error in auth middleware: ', error || error.message)
+
         return response.status(500).json({
-            message : "You have not login",///error.message || error,
+            message : "Internal server error. Please try again later",///error.message || error,
             error : true,
             success : false
         })

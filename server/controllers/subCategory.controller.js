@@ -45,7 +45,7 @@ export const getSubCategoryController = async(request,response)=>{
             data : data,
             error : false,
             success : true
-        })
+        }) 
     } catch (error) {
         return response.status(500).json({
             message : error.message || error,
@@ -98,7 +98,7 @@ export const deleteSubCategoryController = async(request,response)=>{
         const deleteSub = await SubCategoryModel.findByIdAndDelete(_id)
 
         return response.json({
-            message : "Delete successfully",
+            message : "subCategory deleted successfully",
             data : deleteSub,
             error : false,
             success : true

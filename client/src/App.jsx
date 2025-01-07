@@ -9,6 +9,7 @@ import { setUserDetails } from './store/userSlice';
 import { setAllCategory,setAllSubCategory,setLoadingCategory } from './store/productSlice';
 import { useDispatch } from 'react-redux';
 import Axios from './utils/Axios';
+import AxiosToastError from './utils/AxiosToastError';
 import SummaryApi from './common/SummaryApi';
 import { handleAddItemCart } from './store/cartProduct'
 import GlobalProvider from './provider/GlobalProvider';
@@ -36,8 +37,9 @@ function App() {
         if(responseData.success){
            dispatch(setAllCategory(responseData.data.sort((a, b) => a.name.localeCompare(b.name)))) 
         }
-    } catch (error) {
-        
+    } catch (error) { 
+      AxiosToastError(error)
+      console.log(error)
     }finally{
       dispatch(setLoadingCategory(false))
     }
@@ -54,8 +56,8 @@ function App() {
            dispatch(setAllSubCategory(responseData.data.sort((a, b) => a.name.localeCompare(b.name)))) 
         }
     } catch (error) {
-        
-    }finally{
+      AxiosToastError(error)
+      console.log(error)
     }
   }
 

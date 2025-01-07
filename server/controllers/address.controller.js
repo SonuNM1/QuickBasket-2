@@ -4,7 +4,24 @@ import UserModel from "../models/user.model.js";
 export const addAddressController = async(request,response)=>{
     try {
         const userId = request.userId // middleware
+
+        if(!userId){
+            return response.status(401).json({
+                message: 'Unauthorized: Missing userId',
+                error: true, 
+                success: false 
+            })
+        }
+
         const { address_line , city, state, pincode, country,mobile } = request.body
+
+        if (isNaN(Number(mobile))) {
+            return response.status(400).json({
+                message: "Invalid mobile number",
+                error: true,
+                success: false,
+            });
+        }
 
         const createAddress = new AddressModel({
             address_line,

@@ -33,7 +33,7 @@ import mongoose from "mongoose";
         const updateInUser = await UserModel.updateOne({ _id : userId }, { shopping_cart : []})
 
         return response.json({
-            message : "Order successfully",
+            message : "Order confirmed! We’ll start processing it shortly.",
             error : false,
             success : true,
             data : generatedOrder

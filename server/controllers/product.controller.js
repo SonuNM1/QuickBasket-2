@@ -250,7 +250,7 @@ export const deleteProductDetails = async(request,response)=>{
         const deleteProduct = await ProductModel.deleteOne({_id : _id })
 
         return response.json({
-            message : "Delete successfully",
+            message : "Product deleted successfully",
             error : false,
             success : true,
             data : deleteProduct
@@ -265,6 +265,7 @@ export const deleteProductDetails = async(request,response)=>{
 }
 
 //search product
+
 export const searchProduct = async(request,response)=>{
     try {
         let { search, page , limit } = request.body 
@@ -302,8 +303,9 @@ export const searchProduct = async(request,response)=>{
 
 
     } catch (error) {
+        console.log('Search error: ', error || error.message)
         return response.status(500).json({
-            message : error.message || error,
+            message : error.message || error || 'An unexpected error occured while processing your request',
             error : true,
             success : false
         })
