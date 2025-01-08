@@ -84,6 +84,8 @@ const CheckoutPage = () => {
         console.log("Online payment error: ", error)
     }
   }
+
+
   return (
     <section className='bg-blue-50'>
       <div className='container mx-auto p-4 flex flex-col lg:flex-row w-full gap-5 justify-between'>
@@ -94,8 +96,11 @@ const CheckoutPage = () => {
             {
               addressList.map((address, index) => {
                 return (
-                  <label htmlFor={"address" + index} className={!address.status && "hidden"}>
-                    <div className='border rounded p-3 flex gap-3 hover:bg-blue-50'>
+                  <label 
+                  key={index+'address'}
+                  htmlFor={"address" + index} className={!address.status && "hidden"}>
+                    <div 
+                    className='border rounded p-3 flex gap-3 hover:bg-blue-50'>
                       <div>
                         <input id={"address" + index} type='radio' value={index} onChange={(e) => setSelectAddress(e.target.value)} name='address' />
                       </div>

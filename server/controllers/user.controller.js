@@ -47,7 +47,7 @@ export async function registerUserController(request,response){
 
         const verifyEmail = await sendEmail({
             sendTo : email,
-            subject : "Verify email from binkeyit",
+            subject : "Verify email from localBazaa₹",
             html : verifyEmailTemplate({
                 name,
                 url : VerifyEmailUrl
@@ -103,6 +103,7 @@ export async function verifyEmailController(request,response){
 }
 
 //login controller
+
 export async function loginController(request,response){
     try {
         const { email , password } = request.body
@@ -179,6 +180,7 @@ export async function loginController(request,response){
 }
 
 //logout controller
+
 export async function logoutController(request,response){
     try {
         const userid = request.userId //middleware
@@ -278,6 +280,7 @@ export async function uploadAvatar(request, response) {
 
 
 //update user details
+
 export async function updateUserDetails(request,response){
     try {
         const userId = request.userId //auth middleware
@@ -315,53 +318,110 @@ export async function updateUserDetails(request,response){
 }
 
 //forgot password not login
-export async function forgotPasswordController(request,response) {
+
+// export async function forgotPasswordController(request,response) {
+//     try {
+//         const { email } = request.body 
+
+//         const user = await UserModel.findOne({ email })
+
+//         if(!user){
+//             return response.status(400).json({
+//                 message : "Email not available",
+//                 error : true,
+//                 success : false
+//             })
+//         }
+
+//         const otp = generatedOtp()
+//         const expireTime = new Date() + 60 * 60 * 1000 // 1hr
+
+//         const update = await UserModel.findByIdAndUpdate(user._id,{
+//             forgot_password_otp : otp,
+//             forgot_password_expiry : new Date(expireTime).toISOString()
+//         })
+
+//         await sendEmail({
+//             sendTo : email,
+//             subject : "Forgot password from localBazaa₹",
+//             html : forgotPasswordTemplate({
+//                 name : user.name,
+//                 otp : otp
+//             })
+//         })
+
+//         return response.json({
+//             message : "check your email",
+//             error : false,
+//             success : true
+//         })
+
+//     } catch (error) {
+//         return response.status(500).json({
+//             message : error.message || error,
+//             error : true,
+//             success : false
+//         })
+//     }
+// }
+
+export async function forgotPasswordController(request, response) {
     try {
-        const { email } = request.body 
+        const { email } = request.body;
+        console.log("Request received for email:", email);
 
-        const user = await UserModel.findOne({ email })
+        const user = await UserModel.findOne({ email });
 
-        if(!user){
+        if (!user) {
+            console.log("Email not available:", email);
             return response.status(400).json({
-                message : "Email not available",
-                error : true,
-                success : false
-            })
+                message: "Email not available",
+                error: true,
+                success: false
+            });
         }
 
-        const otp = generatedOtp()
-        const expireTime = new Date() + 60 * 60 * 1000 // 1hr
+        const otp = generatedOtp();
+        const expireTime = new Date() + 60 * 60 * 1000; // 1hr
+        console.log("Generated OTP:", otp, "Expiry Time:", expireTime);
 
-        const update = await UserModel.findByIdAndUpdate(user._id,{
-            forgot_password_otp : otp,
-            forgot_password_expiry : new Date(expireTime).toISOString()
-        })
+        const update = await UserModel.findByIdAndUpdate(user._id, {
+            forgot_password_otp: otp,
+            forgot_password_expiry: new Date(expireTime).toISOString()
+        });
+
+        console.log("Database updated for user:", user._id);
 
         await sendEmail({
-            sendTo : email,
-            subject : "Forgot password from Binkeyit",
-            html : forgotPasswordTemplate({
-                name : user.name,
-                otp : otp
+            sendTo: email,
+            subject: "Forgot password from localBazaa₹",
+            html: forgotPasswordTemplate({
+                name: user.name,
+                otp: otp
             })
-        })
+        });
+
+        console.log("Email sent to:", email);
 
         return response.json({
-            message : "check your email",
-            error : false,
-            success : true
-        })
+            message: "Check your email",
+            error: false,
+            success: true
+        });
 
     } catch (error) {
+        console.error("Error in forgotPasswordController:", error);
         return response.status(500).json({
-            message : error.message || error,
-            error : true,
-            success : false
-        })
+            message: error.message || error,
+            error: true,
+            success: false
+        });
     }
 }
 
+
 //verify forgot password otp
+
 export async function verifyForgotPasswordOtp(request,response){
     try {
         const { email , otp }  = request.body

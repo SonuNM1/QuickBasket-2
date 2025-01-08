@@ -146,8 +146,11 @@ const getOrderProductItems = async({
 }
 
 //http://localhost:8080/api/order/webhook
+
 export async function webhookStripe(request,response){
+
     const event = request.body;
+    
     const endPointSecret = process.env.STRIPE_ENPOINT_WEBHOOK_SECRET_KEY
 
     console.log("event",event)
@@ -184,6 +187,8 @@ export async function webhookStripe(request,response){
   // Return a response to acknowledge receipt of the event
   response.json({received: true});
 }
+
+
 
 
 export async function getOrderDetailsController(request,response){
