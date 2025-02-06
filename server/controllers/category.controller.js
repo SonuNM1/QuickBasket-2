@@ -104,6 +104,7 @@ export const AddCategoryController = async (req, res) => {
 
 export const getCategoryController = async (req, res) => {
   try {
+    console.log("gettting categories");
     const query = "SELECT * FROM categories ORDER BY created_at DESC";
     const data = await executeQuery(query);
 
@@ -227,15 +228,19 @@ export const deleteCategoryController = async (req, res) => {
 
     // Check if subcategories exist
     const checkSubCategory = await executeQuery(
-      "SELECT COUNT(*) AS count FROM subcategories WHERE category_id = ?",
+      "SELECT COUNT(*) AS count FROM sub_categories WHERE category_id = ?",
       [_id]
     );
 
+    console.log("sb", checkSubCategory);
+
     // Check if products exist
     const checkProduct = await executeQuery(
-      "SELECT COUNT(*) AS count FROM products WHERE category_id = ?",
-      [_id]
+      "SELECT COUNT(*) AS count FROM products WHERE JSON_CONTAINS(category, ?, '$')",
+      [JSON.stringify(_id)]
     );
+
+    console.log("cp", checkProduct);
 
     if (checkSubCategory[0].count > 0 || checkProduct[0].count > 0) {
       return res.status(400).json({
