@@ -1,6 +1,6 @@
 import ProductModel from "../models/product.model.js";
 import { executeQuery } from "../utils/DBUtils.js";
-
+//updated
 // export const createProductController = async(request,response)=>{
 //     try {
 //         const {

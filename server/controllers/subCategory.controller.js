@@ -1,5 +1,6 @@
 import { executeQuery } from "../utils/DBUtils.js";
 
+//updated
 // Create SubCategory
 export const AddSubCategoryController = async (req, res) => {
   try {
