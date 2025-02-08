@@ -12,7 +12,7 @@ import { HiPencil } from "react-icons/hi";
 import EditSubCategory from "../components/EditSubCategory";
 import CofirmBox from "../components/CofirmBox";
 import toast from "react-hot-toast";
-
+//
 const SubCategoryPage = () => {
   const [openAddSubCategory, setOpenAddSubCategory] = useState(false);
   const [data, setData] = useState([]);
@@ -77,13 +77,13 @@ const SubCategoryPage = () => {
       cell: ({ row }) => {
         return (
           <>
-            {row.original.category?.map((c, index) => {
+            {row.original.category.map((c, index) => {
               return (
                 <p
-                  key={c?._id + "table"}
+                  key={c._id + "table"}
                   className="shadow-md px-1 inline-block"
                 >
-                  {c},
+                  {c.name}
                 </p>
               );
             })}

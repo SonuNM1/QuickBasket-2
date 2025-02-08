@@ -34,8 +34,6 @@ export const AddSubCategoryController = async (req, res) => {
       });
     }
 
-    console.log("Category IDs:", category_ids);
-
     // Insert data into MySQL, converting category_ids array to JSON string
     const result = await executeQuery(
       "INSERT INTO sub_categories (name, image, categories) VALUES (?, ?, ?)",
@@ -65,7 +63,15 @@ export const getSubCategoryController = async (req, res) => {
   try {
     const subCategories = await executeQuery(
       `SELECT sub_categories.*, 
-              JSON_ARRAYAGG(categories.name) AS category
+              COALESCE(
+                JSON_ARRAYAGG(
+                  JSON_OBJECT(
+                    'name', categories.name,
+                    '_id', CAST(categories.id AS CHAR)
+                  )
+                ),
+                JSON_ARRAY()
+              ) AS category
        FROM sub_categories
        LEFT JOIN categories 
        ON JSON_CONTAINS(sub_categories.categories, CAST(categories.id AS CHAR), '$')
