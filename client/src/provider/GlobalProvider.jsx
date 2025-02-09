@@ -14,13 +14,14 @@ export const GlobalContext = createContext(null);
 export const useGlobalContext = () => useContext(GlobalContext);
 
 const GlobalProvider = ({ children }) => {
-  
   const dispatch = useDispatch();
   const [totalPrice, setTotalPrice] = useState(0);
   const [notDiscountTotalPrice, setNotDiscountTotalPrice] = useState(0);
   const [totalQty, setTotalQty] = useState(0);
   const cartItem = useSelector((state) => state.cartItem.cart);
   const user = useSelector((state) => state?.user);
+
+  console.log("cart items", cartItem);
 
   const fetchCartItem = async () => {
     try {

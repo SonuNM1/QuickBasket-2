@@ -1,144 +1,171 @@
-import CartProductModel from "../models/cartproduct.model.js";
-import UserModel from "../models/user.model.js";
+import { executeQuery } from "../utils/DBUtils.js";
 
-export const addToCartItemController = async(request,response)=>{
-    try {
-        const  userId = request.userId
-        const { productId } = request.body
-        
-        if(!productId){
-            return response.status(402).json({
-                message : "Provide productId",
-                error : true,
-                success : false
-            })
-        }
+/**
+ * Add Item to Cart
+ */
+export const addToCartItemController = async (request, response) => {
+  try {
+    const userId = request.userId;
+    const { productId } = request.body;
 
-        const checkItemCart = await CartProductModel.findOne({
-            userId : userId,
-            productId : productId
-        })
+    console.log("hello add to card");
 
-        if(checkItemCart){
-            return response.status(400).json({
-                message : "Item already in cart"
-            })
-        }
-
-        const cartItem = new CartProductModel({
-            quantity : 1,
-            userId : userId,
-            productId : productId
-        })
-        const save = await cartItem.save()
-
-        const updateCartUser = await UserModel.updateOne({ _id : userId},{
-            $push : { 
-                shopping_cart : productId
-            }
-        })
-
-        return response.json({
-            data : save,
-            message : "Item add successfully",
-            error : false,
-            success : true
-        })
-
-        
-    } catch (error) {
-        return response.status(500).json({
-            message : error.message || error,
-            error : true,
-            success : false
-        })
+    if (!productId) {
+      return response.status(402).json({
+        message: "Provide productId",
+        error: true,
+        success: false,
+      });
     }
-}
 
-export const getCartItemController = async(request,response)=>{
-    try {
-        const userId = request.userId
+    // Check if item is already in the cart
+    const checkItemCart = await executeQuery(
+      "SELECT * FROM cart_product WHERE user_id = ? AND product_id = ?",
+      [userId, productId]
+    );
 
-        const cartItem =  await CartProductModel.find({
-            userId : userId
-        }).populate('productId')
-
-        return response.json({
-            data : cartItem,
-            error : false,
-            success : true
-        })
-
-    } catch (error) {
-        return response.status(500).json({
-            message : error.message || error,
-            error : true,
-            success : false
-        })
+    if (checkItemCart.length > 0) {
+      return response.status(400).json({
+        message: "Item already in cart",
+      });
     }
-}
 
-export const updateCartItemQtyController = async(request,response)=>{
-    try {
-        const userId = request.userId 
-        const { _id,qty } = request.body
+    // Add item to cart
+    const save = await executeQuery(
+      "INSERT INTO cart_product (user_id, product_id, quantity) VALUES (?, ?, ?)",
+      [userId, productId, 1]
+    );
 
-        if(!_id ||  !qty){
-            return response.status(400).json({
-                message : "provide _id, qty"
-            })
-        }
+    return response.json({
+      data: save,
+      message: "Item added successfully",
+      error: false,
+      success: true,
+    });
+  } catch (error) {
+    return response.status(500).json({
+      message: error.message || error,
+      error: true,
+      success: false,
+    });
+  }
+};
 
-        const updateCartitem = await CartProductModel.updateOne({
-            _id : _id,
-            userId : userId
-        },{
-            quantity : qty
-        })
+/**
+ * Get Cart Items
+ */
+export const getCartItemController = async (request, response) => {
+  try {
+    const userId = request.userId;
 
-        return response.json({
-            message : "Update cart",
-            success : true,
-            error : false, 
-            data : updateCartitem
-        })
+    console.log("Getting cart items for user:", userId);
 
-    } catch (error) {
-        return response.status(500).json({
-            message : error.message || error,
-            error : true,
-            success : false
-        })
+    // Fetch cart items with product details
+    const cartItems = await executeQuery(
+      `SELECT cp.id AS cart_item_id, cp.quantity, 
+                p.id AS product_id, p.name, p.price, p.description, p.image
+         FROM cart_product cp
+         JOIN products p ON cp.product_id = p.id
+         WHERE cp.user_id = ?`,
+      [userId]
+    );
+
+    // Transform the data to nest product details under "productId"
+    const formattedCartItems = cartItems.map((item) => ({
+      _id: item.cart_item_id,
+      quantity: item.quantity,
+      productId: {
+        _id: item.product_id,
+        name: item.name,
+        price: item.price,
+        description: item.description,
+        image: item.image,
+      },
+    }));
+
+    console.log("Formatted cart items:", formattedCartItems);
+
+    return response.json({
+      data: formattedCartItems,
+      error: false,
+      success: true,
+    });
+  } catch (error) {
+    console.error("Error fetching cart items:", error);
+    return response.status(500).json({
+      message: error.message || error,
+      error: true,
+      success: false,
+    });
+  }
+};
+
+/**
+ * Update Cart Item Quantity
+ */
+export const updateCartItemQtyController = async (request, response) => {
+  try {
+    const userId = request.userId;
+    const { _id, qty } = request.body;
+
+    if (!_id || !qty) {
+      return response.status(400).json({
+        message: "Provide _id and qty",
+      });
     }
-}
 
-export const deleteCartItemQtyController = async(request,response)=>{
-    try {
-      const userId = request.userId // middleware
-      const { _id } = request.body 
-      
-      if(!_id){
-        return response.status(400).json({
-            message : "Provide _id",
-            error : true,
-            success : false
-        })
-      }
+    const updateCartItem = await executeQuery(
+      "UPDATE cart_product SET quantity = ? WHERE id = ? AND user_id = ?",
+      [qty, _id, userId]
+    );
 
-      const deleteCartItem  = await CartProductModel.deleteOne({_id : _id, userId : userId })
+    return response.json({
+      message: "Cart updated",
+      success: true,
+      error: false,
+      data: updateCartItem,
+    });
+  } catch (error) {
+    return response.status(500).json({
+      message: error.message || error,
+      error: true,
+      success: false,
+    });
+  }
+};
 
-      return response.json({
-        message : "Item removed",
-        error : false,
-        success : true,
-        data : deleteCartItem
-      })
+/**
+ * Delete Cart Item
+ */
+export const deleteCartItemQtyController = async (request, response) => {
+  try {
+    const userId = request.userId;
+    const { _id } = request.body;
 
-    } catch (error) {
-        return response.status(500).json({
-            message : error.message || error,
-            error : true,
-            success : false
-        })
+    if (!_id) {
+      return response.status(400).json({
+        message: "Provide _id",
+        error: true,
+        success: false,
+      });
     }
-}
+
+    const deleteCartItem = await executeQuery(
+      "DELETE FROM cart_product WHERE id = ? AND user_id = ?",
+      [_id, userId]
+    );
+
+    return response.json({
+      message: "Item removed",
+      error: false,
+      success: true,
+      data: deleteCartItem,
+    });
+  } catch (error) {
+    return response.status(500).json({
+      message: error.message || error,
+      error: true,
+      success: false,
+    });
+  }
+};
