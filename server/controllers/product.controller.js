@@ -231,7 +231,7 @@ export const createProductController = async (request, response) => {
 
 export const getProductByCategory = async (request, response) => {
   try {
-    console.log("gettting products by category");
+    console.log("getting products ");
     const { id } = request.body;
 
     if (!id) {
@@ -243,29 +243,45 @@ export const getProductByCategory = async (request, response) => {
     }
 
     // Fetch products where the given category ID exists in the category JSON array
+    // const query = `
+    //   SELECT
+    //     p.*,
+    //     (
+    //       SELECT JSON_ARRAYAGG(
+    //         JSON_OBJECT('_id', c.id, 'name', c.name)
+    //       )
+    //       FROM categories c
+    //       WHERE JSON_CONTAINS(p.category, JSON_QUOTE(CAST(c.id AS CHAR)), '$')
+    //     ) AS category_details,
+    //     (
+    //       SELECT JSON_ARRAYAGG(
+    //         JSON_OBJECT('_id', sc.id, 'name', sc.name)
+    //       )
+    //       FROM sub_categories sc
+    //       WHERE JSON_CONTAINS(p.subCategory, JSON_QUOTE(CAST(sc.id AS CHAR)), '$')
+    //     ) AS subCategory_details
+    //   FROM products p
+    //   WHERE JSON_CONTAINS(p.category, JSON_QUOTE(?), '$')
+    //   LIMIT 15
+    // `;
     const query = `
-      SELECT 
-        p.*, 
-        (
-          SELECT JSON_ARRAYAGG(
-            JSON_OBJECT('_id', c.id, 'name', c.name)
-          ) 
-          FROM categories c 
-          WHERE JSON_CONTAINS(p.category, JSON_QUOTE(CAST(c.id AS CHAR)), '$')
-        ) AS category_details,
-        (
-          SELECT JSON_ARRAYAGG(
-            JSON_OBJECT('_id', sc.id, 'name', sc.name)
-          ) 
-          FROM sub_categories sc 
-          WHERE JSON_CONTAINS(p.subCategory, JSON_QUOTE(CAST(sc.id AS CHAR)), '$')
-        ) AS subCategory_details
-      FROM products p
-      WHERE JSON_CONTAINS(p.category, JSON_QUOTE(?), '$')
-      LIMIT 15
-    `;
+    SELECT 
+      p.*, 
+      (
+        SELECT JSON_ARRAYAGG(
+          JSON_OBJECT('_id', c.id, 'name', c.name)
+        ) 
+        FROM categories c 
+        WHERE JSON_CONTAINS(p.category, CAST(c.id AS CHAR), '$')
+      ) AS category_details
+    FROM products p
+    WHERE JSON_CONTAINS(p.category, CAST(? AS CHAR), '$')
+    LIMIT 15;
+  `;
 
     const products = await executeQuery(query, [String(id)]);
+
+    console.log("htios is products", products);
 
     return response.json({
       message: "Category product list",
@@ -306,7 +322,7 @@ export const getProductByCategory = async (request, response) => {
 
 export const getProductDetails = async (request, response) => {
   try {
-    console.log("getting product by category");
+    console.log("getting product by category_______________________");
     const { productId } = request.body;
 
     console.log("getting product");
@@ -334,7 +350,7 @@ export const getProductDetails = async (request, response) => {
             JSON_OBJECT('_id', sc.id, 'name', sc.name)
           ) 
           FROM sub_categories sc 
-          WHERE JSON_CONTAINS(p.subCategory, JSON_QUOTE(CAST(c.id AS CHAR)), '$')
+          WHERE JSON_CONTAINS(p.subCategory, JSON_QUOTE(CAST(sc.id AS CHAR)), '$')
         ) AS subCategory_details
       FROM products p
       WHERE p.id = ?
