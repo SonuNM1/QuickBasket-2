@@ -58,7 +58,7 @@ export const getCartItemController = async (request, response) => {
   try {
     const userId = request.userId;
 
-    console.log("Getting cart items for user:", userId);
+    // console.log("Getting cart items for user:", userId);
 
     // Fetch cart items with product details
     const cartItems = await executeQuery(
@@ -83,7 +83,7 @@ export const getCartItemController = async (request, response) => {
       },
     }));
 
-    console.log("Formatted cart items:", formattedCartItems);
+    // console.log("Formatted cart items:", formattedCartItems);
 
     return response.json({
       data: formattedCartItems,

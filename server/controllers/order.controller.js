@@ -7,7 +7,7 @@ export async function CashOnDeliveryOrderController(request, response) {
     const userId = request.userId;
     const { list_items, totalAmt, addressId, subTotalAmt } = request.body;
 
-    console.log("hello oders", request.body);
+    // console.log("hello oders", request.body);
 
     const orderQueries = list_items.map((el) => {
       return executeQuery(
@@ -71,7 +71,7 @@ export async function getOrderDetailsController(request, response) {
       [userId]
     );
 
-    console.log("orderList", orderList);
+    // console.log("orderList", orderList);
 
     return response.json({
       message: "Order list",
@@ -199,7 +199,7 @@ const getOrderProductItems = async ({
 export async function webhookStripe(request, response) {
   try {
     const event = request.body;
-    console.log("event", event);
+    // console.log("event", event);
 
     // Handle the event
     switch (event.type) {
