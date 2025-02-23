@@ -1,5 +1,6 @@
 import ProductModel from "../models/product.model.js";
 import { executeQuery } from "../utils/DBUtils.js";
+
 //updated
 // export const createProductController = async(request,response)=>{
 //     try {
@@ -66,7 +67,7 @@ export const createProductController = async (request, response) => {
       price,
       discount,
       description,
-      more_details,
+      variations  // from frontend 
     } = request.body;
 
     console.log("Received request body:", request.body);
@@ -134,8 +135,26 @@ export const createProductController = async (request, response) => {
       });
     }
 
+    // inserting and saving variations in the database 
+
+    const productId = product.insertId ; 
+
+    if(variations && Array.isArray(variations)){
+      for(const variation of variations){
+        const {option, price} = variation ; 
+
+        if(!option || !price) continue ; // skip invalid variations 
+
+        await executeQuery(
+          `INSERT INTO product_variation (product_id, attribute, price) VALUES (?, ?, ?)`, 
+          [productId, option, parseFloat(price)]
+        )
+
+      }
+    }
+
     return response.json({
-      message: "Product Created Successfully",
+      message: "Product Created Successfully with Variations",
       data: product,
       error: false,
       success: true,

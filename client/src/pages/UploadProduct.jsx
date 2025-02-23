@@ -6,12 +6,10 @@ import ViewImage from "../components/ViewImage";
 import { MdDelete } from "react-icons/md";
 import { useSelector } from "react-redux";
 import { IoClose } from "react-icons/io5";
-import AddFieldComponent from "../components/AddFieldComponent";
 import Axios from "../utils/Axios";
 import SummaryApi from "../common/SummaryApi";
 import AxiosToastError from "../utils/AxiosToastError";
 import successAlert from "../utils/SuccessAlert";
-import { useEffect } from "react";
 
 const UploadProduct = () => {
   const [data, setData] = useState({
@@ -24,16 +22,19 @@ const UploadProduct = () => {
     price: "",
     discount: "",
     description: "",
-    more_details: {},
+    variations: [],
   });
+
   const [imageLoading, setImageLoading] = useState(false);
   const [ViewImageURL, setViewImageURL] = useState("");
+
   const allCategory = useSelector((state) => state.product.allCategory);
+
   const [selectCategory, setSelectCategory] = useState("");
   const [selectSubCategory, setSelectSubCategory] = useState("");
+
   const allSubCategory = useSelector((state) => state.product.allSubCategory);
 
-  const [openAddField, setOpenAddField] = useState(false);
   const [fieldName, setFieldName] = useState("");
 
   const handleChange = (e) => {
@@ -69,6 +70,37 @@ const UploadProduct = () => {
     setImageLoading(false);
   };
 
+  // handle variation change
+
+  const handleVariationChange = (index, key, value) => {
+    const newVariations = [...data.variations];
+
+    newVariations[index][key] = value;
+
+    setData((prev) => ({
+      ...prev,
+      variations: newVariations,
+    }));
+  };
+
+  // Add a new variation
+
+  const addVariation = () => {
+    setData((prev) => ({
+      ...prev,
+      variations: [...prev.variations, { option: "", price: "" }],
+    }));
+  };
+
+  // Remove a variation
+
+  const removeVariation = (index) => {
+    setData((prev) => ({
+      ...prev,
+      variations: prev.variations.filter((_, i) => i !== index),
+    }));
+  };
+
   const handleDeleteImage = async (index) => {
     data.image.splice(index, 1);
     setData((preve) => {
@@ -86,6 +118,7 @@ const UploadProduct = () => {
       };
     });
   };
+
   const handleRemoveSubCategory = async (index) => {
     data.subCategory.splice(index, 1);
     setData((preve) => {
@@ -93,20 +126,6 @@ const UploadProduct = () => {
         ...preve,
       };
     });
-  };
-
-  const handleAddField = () => {
-    setData((preve) => {
-      return {
-        ...preve,
-        more_details: {
-          ...preve.more_details,
-          [fieldName]: "",
-        },
-      };
-    });
-    setFieldName("");
-    setOpenAddField(false);
   };
 
   const handleSubmit = async (e) => {
@@ -132,7 +151,7 @@ const UploadProduct = () => {
           price: "",
           discount: "",
           description: "",
-          more_details: {},
+          variations: [],
         });
       }
     } catch (error) {
@@ -140,9 +159,6 @@ const UploadProduct = () => {
     }
   };
 
-  // useEffect(()=>{
-  //   successAlert("Upload successfully")
-  // },[])
   return (
     <section className="">
       <div className="p-2   bg-white shadow-md flex items-center justify-between">
@@ -165,6 +181,7 @@ const UploadProduct = () => {
               className="bg-blue-50 p-2 outline-none border focus-within:border-primary-200 rounded"
             />
           </div>
+
           <div className="grid gap-1">
             <label htmlFor="description" className="font-medium">
               Description
@@ -182,6 +199,7 @@ const UploadProduct = () => {
               className="bg-blue-50 p-2 outline-none border focus-within:border-primary-200 rounded resize-none"
             />
           </div>
+
           <div>
             <p className="font-medium">Image</p>
             <div>
@@ -207,7 +225,9 @@ const UploadProduct = () => {
                   onChange={handleUploadImage}
                 />
               </label>
+
               {/**display uploded image*/}
+
               <div className="flex flex-wrap gap-4">
                 {data.image.map((img, index) => {
                   return (
@@ -233,6 +253,7 @@ const UploadProduct = () => {
               </div>
             </div>
           </div>
+
           <div className="grid gap-1">
             <label className="font-medium">Category</label>
             <div>
@@ -279,6 +300,7 @@ const UploadProduct = () => {
               </div>
             </div>
           </div>
+
           <div className="grid gap-1">
             <label className="font-medium">Sub Category</label>
             <div>
@@ -392,41 +414,50 @@ const UploadProduct = () => {
             />
           </div>
 
-          {/**add more field**/}
-          {Object?.keys(data?.more_details)?.map((k, index) => {
-            return (
-              <div className="grid gap-1">
-                <label htmlFor={k} className="font-medium">
-                  {k}
-                </label>
-                <input
-                  id={k}
-                  type="text"
-                  value={data?.more_details[k]}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    setData((preve) => {
-                      return {
-                        ...preve,
-                        more_details: {
-                          ...preve.more_details,
-                          [k]: value,
-                        },
-                      };
-                    });
-                  }}
-                  required
-                  className="bg-blue-50 p-2 outline-none border focus-within:border-primary-200 rounded"
-                />
-              </div>
-            );
-          })}
+          {/* Variation input fields */}
 
-          <div
-            onClick={() => setOpenAddField(true)}
-            className=" hover:bg-primary-200 bg-white py-1 px-3 w-32 text-center font-semibold border border-primary-200 hover:text-neutral-900 cursor-pointer rounded"
-          >
-            Add Fields
+          <div className="grid gap-1">
+            <label className="font-medium">Variations</label>
+
+            {data.variations.map((variation, index) => (
+              <div key={index} className="flex gap-2 items-center">
+                <input
+                  type="text"
+                  placeholder="Size"
+                  value={variation.option}
+                  onChange={(e) =>
+                    handleVariationChange(index, "option", e.target.value)
+                  }
+                  required
+                  className="bg-blue-50 p-2 outline-none border rounded"
+                />
+                <input
+                  type="number"
+                  placeholder="Price"
+                  value={variation.price}
+                  onChange={(e) =>
+                    handleVariationChange(index, "price", e.target.value)
+                  }
+                  required
+                  className="bg-blue-50 p-2 outline-none border rounded"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeVariation(index)}
+                  className="text-red-500"
+                >
+                  <IoClose size={20} />
+                </button>
+              </div>
+            ))}
+
+            <button
+              type="button"
+              onClick={addVariation}
+              className="bg-blue-500 text-white px-2 py-1 rounded w-[230px] mt-2"
+            >
+              + Add Variation
+            </button>
           </div>
 
           <button className="bg-primary-100 hover:bg-primary-200 py-2 rounded font-semibold">
@@ -437,15 +468,6 @@ const UploadProduct = () => {
 
       {ViewImageURL && (
         <ViewImage url={ViewImageURL} close={() => setViewImageURL("")} />
-      )}
-
-      {openAddField && (
-        <AddFieldComponent
-          value={fieldName}
-          onChange={(e) => setFieldName(e.target.value)}
-          submit={handleAddField}
-          close={() => setOpenAddField(false)}
-        />
       )}
     </section>
   );
