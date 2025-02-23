@@ -133,3 +133,46 @@ export const getRating = async (req, res) => {
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+export const getAllRating = async (req, res) => {
+  try {
+    console.log("Fetching user rating...");
+
+    const { product_id } = req.body; // Extract product_id from request body
+
+    console.log("________________", product_id, userId);
+
+    if (!userId || !product_id) {
+      return res.status(400).json({
+        message: "User ID and Product ID are required",
+        error: true,
+      });
+    }
+
+    const query = `
+      SELECT r.*, u.name 
+      FROM ratings r 
+      JOIN users u ON r.user_id = u.id 
+      WHERE r.product_id = ? 
+      ORDER BY r.created_at DESC
+    `;
+
+    const ratings = await executeQuery(query, [product_id]);
+
+    console.log("User rating:", ratings);
+
+    if (ratings.length === 0) {
+      return res.status(200).json({
+        message: "No review found for this product by the user.",
+        data: [],
+      });
+    }
+
+    return res
+      .status(200)
+      .json({ message: "lates review fetched", data: ratings[0] }); // Return the logged-in user's review
+  } catch (error) {
+    console.error("Error fetching user rating:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
