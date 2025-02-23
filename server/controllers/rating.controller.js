@@ -140,7 +140,7 @@ export const getAllRating = async (req, res) => {
 
     const { product_id } = req.body; // Extract product_id from request body
 
-    console.log("________________", product_id, userId);
+    // console.log("________________", product_id, userId);
 
     if (!userId || !product_id) {
       return res.status(400).json({

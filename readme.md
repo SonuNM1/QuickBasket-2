@@ -1,1 +1,4 @@
-# localBazar Full Stack MERN App
+# localBazaa₹ : Full-Stack-Ecommerce
+
+
+ 
