@@ -16,6 +16,7 @@ import cartRouter from "./route/cart.route.js";
 import addressRouter from "./route/address.route.js";
 import orderRouter from "./route/order.route.js";
 import ratingRouter from "./route/rating.route.js";
+import wishlistRouter from "./route/wishlist.route.js";
 
 const app = express();
 
@@ -53,6 +54,7 @@ app.use("/api/cart", cartRouter);
 app.use("/api/address", addressRouter);
 app.use("/api/order", orderRouter);
 app.use("/api/rating", ratingRouter);
+app.use('/api/wishlist', wishlistRouter)
 
 // connectDB().then(()=>{
 //     app.listen(PORT,()=>{

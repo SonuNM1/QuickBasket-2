@@ -1,3 +1,4 @@
+
 export const baseURL = import.meta.env.VITE_API_URL;
 
 const SummaryApi = {
@@ -161,6 +162,18 @@ const SummaryApi = {
     url: "/api/rating/add",
     method: "post",
   },
+  addProductToWishlist: {
+    url: '/api/wishlist/add',
+    method: 'post'
+  }, 
+  fetchUserWishlist: {
+    url: '/api/wishlist/get',
+    method: 'get'
+  },
+  removeProductFromWishlist: {
+    url: '/api/wishlist/remove', 
+    method: 'post'
+  }
 };
 
 export default SummaryApi;

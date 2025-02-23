@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
+import { FaHeart } from "react-icons/fa6";
 import SummaryApi from "../common/SummaryApi";
 import Axios from "../utils/Axios";
 import AxiosToastError from "../utils/AxiosToastError";
@@ -11,17 +12,23 @@ import image2 from "../assets/Best_Prices_Offers.png";
 import { pricewithDiscount } from "../utils/PriceWithDiscount";
 import AddToCartButton from "../components/AddToCartButton";
 import UserRating from "./UserRating";
+import toast from "react-hot-toast";
 
 const ProductDisplayPage = () => {
+
   const params = useParams();
   let productId = params?.product?.split("-")?.slice(-1)[0];
+
   const [data, setData] = useState({
     name: "",
     image: [],
   });
+  
   const [image, setImage] = useState(0);
   const [loading, setLoading] = useState(false);
   const imageContainer = useRef();
+
+  const [isWishlisted, setIsWishlisted] = useState(false) ; 
 
   const fetchProductDetails = async () => {
     try {
@@ -51,10 +58,71 @@ const ProductDisplayPage = () => {
   const handleScrollRight = () => {
     imageContainer.current.scrollLeft += 100;
   };
+
   const handleScrollLeft = () => {
     imageContainer.current.scrollLeft -= 100;
   };
+
+  // const toggleWishlist = async (e) => {
+    
+  //   e.preventDefault();
+  //   e.stopPropagation();
+
+  //   try {
+  //     if (isWishlisted) {
+  //       await Axios({
+  //         ...SummaryApi.removeProductFromWishlist,
+  //         data: { product_id: productId },
+  //       });
+  //       toast.success("Removed from wishlist");
+  //     } else {
+  //       await Axios({
+  //         ...SummaryApi.addProductToWishlist,
+  //         data: { product_id: productId },
+  //       });
+  //       toast.success("Added to wishlist");
+  //     }
+  //     setIsWishlisted(!isWishlisted);
+  //   } catch (error) {
+  //     console.error("Wishlist error:", error);
+  //     toast.error("Error updating wishlist");
+  //   }
+  // };
+
+  const toggleWishlist = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  
+    const payload = { product_id: data.id };  // ✅ Prepare data
+  
+    console.log("Sending Wishlist Request:", payload);  // ✅ Debugging log
+  
+    try {
+      let response;
+      if (isWishlisted) {
+        response = await Axios({
+          ...SummaryApi.removeProductFromWishlist,
+          data: payload,
+        });
+        toast.success("Removed from wishlist");
+      } else {
+        response = await Axios({
+          ...SummaryApi.addProductToWishlist,
+          data: payload,
+        });
+        toast.success("Added to wishlist");
+      }
+      console.log("Wishlist API Response:", response);  // ✅ Debugging log
+      setIsWishlisted(!isWishlisted);
+    } catch (error) {
+      console.error("Wishlist API Error:", error);
+      toast.error("Error updating wishlist");
+    }
+  };
+  
+
   console.log("product data", data);
+
   return (
     <section className="container mx-auto p-4 grid lg:grid-cols-2 ">
       {/* product image and review  */}
@@ -174,10 +242,21 @@ const ProductDisplayPage = () => {
         {data.stock === 0 ? (
           <p className="text-lg text-red-500 my-2">Out of Stock</p>
         ) : (
+
           // <button className='my-4 px-4 py-1 bg-green-600 hover:bg-green-700 text-white rounded'>Add</button>
-          <div className="my-4">
+          
+          <div className="my-4 flex gap-1 items-center">
             <AddToCartButton data={data} />
+
+            {/* wishlist button */}
+          
+            <button 
+            onClick={toggleWishlist}
+            className="flex items-center gap-2 bg-white border border-red-500 text-red-500 px-6 py-2 rounded-md hover:bg-red-700 hover:text-white transition duration-300 h-9 text-sm">
+              <FaHeart size={20} /> <span className="text-black hover:text-white font-medium">Wishlist</span>
+            </button>
           </div>
+
         )}
 
         <h2 className="font-semibold">Why shop from localBazaa₹? </h2>
@@ -202,17 +281,7 @@ const ProductDisplayPage = () => {
               </p>
             </div>
           </div>
-          {/* <div className='flex  items-center gap-4 my-4'>
-                      <img
-                        src={image3}
-                        alt='Wide Assortment'
-                        className='w-20 h-20'
-                      />
-                      <div className='text-sm'>
-                        <div className='font-semibold'>Wide Assortment</div>
-                        <p>Choose from 5000+ products across food personal care, household & other categories.</p>
-                      </div>
-                  </div> */}
+        
         </div>
 
         {/****only mobile */}
