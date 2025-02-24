@@ -93,69 +93,69 @@ export const pricewithDiscount = (price, dis = 1) => {
   return actualPrice;
 };
 
-export async function paymentController(request, response) {
-  try {
-    const userId = request.userId; // Auth middleware
-    const { list_items, totalAmt, addressId, subTotalAmt } = request.body;
+// export async function paymentController(request, response) {
+//   try {
+//     const userId = request.userId; // Auth middleware
+//     const { list_items, totalAmt, addressId, subTotalAmt } = request.body;
 
-    const user = await executeQuery(`SELECT email FROM users WHERE id = ?`, [
-      userId,
-    ]);
+//     const user = await executeQuery(`SELECT email FROM users WHERE id = ?`, [
+//       userId,
+//     ]);
 
-    if (!user.length) {
-      return response.status(404).json({
-        message: "User not found",
-        error: true,
-        success: false,
-      });
-    }
+//     if (!user.length) {
+//       return response.status(404).json({
+//         message: "User not found",
+//         error: true,
+//         success: false,
+//       });
+//     }
 
-    const line_items = list_items.map((item) => ({
-      price_data: {
-        currency: "inr",
-        product_data: {
-          name: item.productId.name,
-          images: item.productId.image,
-          metadata: {
-            productId: item.productId.id, // SQL doesn't use _id like MongoDB
-          },
-        },
-        unit_amount:
-          pricewithDiscount(item.productId.price, item.productId.discount) *
-          100,
-      },
-      adjustable_quantity: {
-        enabled: true,
-        minimum: 1,
-      },
-      quantity: item.quantity,
-    }));
+//     const line_items = list_items.map((item) => ({
+//       price_data: {
+//         currency: "inr",
+//         product_data: {
+//           name: item.productId.name,
+//           images: item.productId.image,
+//           metadata: {
+//             productId: item.productId.id, // SQL doesn't use _id like MongoDB
+//           },
+//         },
+//         unit_amount:
+//           pricewithDiscount(item.productId.price, item.productId.discount) *
+//           100,
+//       },
+//       adjustable_quantity: {
+//         enabled: true,
+//         minimum: 1,
+//       },
+//       quantity: item.quantity,
+//     }));
 
-    const params = {
-      submit_type: "pay",
-      mode: "payment",
-      payment_method_types: ["card"],
-      customer_email: user[0].email,
-      metadata: {
-        userId: userId,
-        addressId: addressId,
-      },
-      line_items: line_items,
-      success_url: `${process.env.FRONTEND_URL}/success`,
-      cancel_url: `${process.env.FRONTEND_URL}/cancel`,
-    };
+//     const params = {
+//       submit_type: "pay",
+//       mode: "payment",
+//       payment_method_types: ["card"],
+//       customer_email: user[0].email,
+//       metadata: {
+//         userId: userId,
+//         addressId: addressId,
+//       },
+//       line_items: line_items,
+//       success_url: `${process.env.FRONTEND_URL}/success`,
+//       cancel_url: `${process.env.FRONTEND_URL}/cancel`,
+//     };
 
-    const session = await Stripe.checkout.sessions.create(params);
+//     const session = await Stripe.checkout.sessions.create(params);
 
-    return response.status(200).json(session);
-  } catch (error) {
-    return response.status(500).json({
-      message: error.message || error,
-      error: true,
-      success: false,
-    });
-  }
-}
+//     return response.status(200).json(session);
+//   } catch (error) {
+//     return response.status(500).json({
+//       message: error.message || error,
+//       error: true,
+//       success: false,
+//     });
+//   }
+// }
 
 import { v4 as uuidv4 } from "uuid";
 
@@ -257,5 +257,95 @@ export async function webhookStripe(request, response) {
   } catch (error) {
     console.error("Error handling Stripe webhook:", error);
     response.status(500).json({ error: error.message });
+  }
+}
+
+// const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+export async function paymentController(request, response) {
+  try {
+    const userId = request.userId; // Auth middleware extracts this
+    const { list_items, totalAmt, addressId, subTotalAmt } = request.body;
+
+    // Fetch user details
+    const user = await executeQuery(`SELECT email FROM users WHERE id = ?`, [
+      userId,
+    ]);
+
+    if (!user.length) {
+      return response.status(404).json({
+        message: "User not found",
+        error: true,
+        success: false,
+      });
+    }
+
+    const line_items = list_items.map((item) => ({
+      price_data: {
+        currency: "USD",
+        product_data: {
+          name: item.productId.name,
+          images: item.productId.image,
+          metadata: {
+            productId: item.productId.id, // SQL doesn't use _id like MongoDB
+          },
+        },
+        unit_amount: Math.round(
+          pricewithDiscount(item.productId.price, item.productId.discount) * 100
+        ), // Convert to paise
+      },
+      adjustable_quantity: {
+        enabled: true,
+        minimum: 1,
+      },
+      quantity: item.quantity,
+    }));
+
+    const params = {
+      submit_type: "pay",
+      mode: "payment",
+      payment_method_types: ["amazon_pay"], // Include UPI & Net Banking for India
+      customer_email: user[0].email,
+      metadata: {
+        userId: userId,
+        addressId: addressId,
+      },
+      line_items: line_items,
+      success_url: `${process.env.FRONTEND_URL}/success`,
+      cancel_url: `${process.env.FRONTEND_URL}/cancel`,
+    };
+
+    const session = await Stripe.checkout.sessions.create(params);
+
+    const orderQueries = list_items.map((el) => {
+      return executeQuery(
+        `INSERT INTO orders (user_id, order_id, product_id, product_name, product_image, payment_id, payment_status, delivery_address_id, subtotal_amount, total_amount, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+        [
+          userId,
+          `ORD-${Date.now()}`,
+          el.productId._id,
+          el.productId.name,
+          JSON.stringify(el.productId.image),
+          "",
+          "CASH ON DELIVERY",
+          addressId,
+          subTotalAmt,
+          totalAmt,
+        ]
+      );
+    });
+    await Promise.all(orderQueries);
+
+    // Remove items from cart
+    await executeQuery("DELETE FROM cart_product WHERE user_id = ?", [userId]);
+
+    return response.status(200).json(session);
+  } catch (error) {
+    console.log(error);
+    return response.status(500).json({
+      message: error.message || "Payment processing error",
+      error: true,
+      success: false,
+    });
   }
 }

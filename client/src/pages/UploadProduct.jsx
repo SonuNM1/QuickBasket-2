@@ -33,6 +33,8 @@ const UploadProduct = () => {
   const [selectCategory, setSelectCategory] = useState("");
   const [selectSubCategory, setSelectSubCategory] = useState("");
 
+  // const [variations,setVariants] = useState
+
   const allSubCategory = useSelector((state) => state.product.allSubCategory);
 
   const [fieldName, setFieldName] = useState("");
