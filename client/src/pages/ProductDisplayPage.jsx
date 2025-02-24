@@ -23,12 +23,12 @@ const ProductDisplayPage = () => {
     name: "",
     image: [],
   });
-  
+
   const [image, setImage] = useState(0);
   const [loading, setLoading] = useState(false);
   const imageContainer = useRef();
 
-  const [isWishlisted, setIsWishlisted] = useState(false) ; 
+  const [isWishlisted, setIsWishlisted] = useState(false);
 
   const fetchProductDetails = async () => {
     try {
@@ -51,8 +51,29 @@ const ProductDisplayPage = () => {
     }
   };
 
+  // Check if the product is already in the wishlist 
+
+  const checkIfWishlisted = async () => {
+    try {
+      const response = await Axios(
+        SummaryApi.fetchUserWishlist
+      )
+
+      const wishlistItems = response.data.data || [] ; 
+
+      // check if the product is in the wishlist 
+
+      const alreadyWishlisted = wishlistItems.some((item) => item.id === parseInt(productId))
+
+      setIsWishlisted(alreadyWishlisted) ; 
+    } catch (error) {
+      console.log('Check if wishlisted productDisplayPage error: ', error || error.message) ; 
+    }
+  }
+
   useEffect(() => {
     fetchProductDetails();
+    checkIfWishlisted() ; 
   }, [params]);
 
   const handleScrollRight = () => {
@@ -64,7 +85,7 @@ const ProductDisplayPage = () => {
   };
 
   // const toggleWishlist = async (e) => {
-    
+
   //   e.preventDefault();
   //   e.stopPropagation();
 
@@ -90,13 +111,14 @@ const ProductDisplayPage = () => {
   // };
 
   const toggleWishlist = async (e) => {
+
     e.preventDefault();
     e.stopPropagation();
-  
-    const payload = { product_id: data.id };  // ✅ Prepare data
-  
-    console.log("Sending Wishlist Request:", payload);  // ✅ Debugging log
-  
+
+    const payload = { product_id: data.id || data._id}; // ✅ Prepare data
+
+    console.log("Sending Wishlist Request:", payload); // ✅ Debugging log
+
     try {
       let response;
       if (isWishlisted) {
@@ -104,27 +126,36 @@ const ProductDisplayPage = () => {
           ...SummaryApi.removeProductFromWishlist,
           data: payload,
         });
+        setIsWishlisted(false) ; 
         toast.success("Removed from wishlist");
       } else {
         response = await Axios({
           ...SummaryApi.addProductToWishlist,
           data: payload,
         });
-        toast.success("Added to wishlist");
+        
+        if(response.data.success){
+          setIsWishlisted(true) ; 
+          toast.success("Added to wishlist");
+        }
+        else{
+          toast.error('Product already exists in your wishlist')
+        }
+
       }
-      console.log("Wishlist API Response:", response);  // ✅ Debugging log
-      setIsWishlisted(!isWishlisted);
+      console.log("Wishlist API Response:", response); // ✅ Debugging log
+      // setIsWishlisted(!isWishlisted);
     } catch (error) {
       console.error("Wishlist API Error:", error);
       toast.error("Error updating wishlist");
     }
   };
-  
 
   console.log("product data", data);
 
   return (
     <section className="container mx-auto p-4 grid lg:grid-cols-2 ">
+
       {/* product image and review  */}
 
       <div className="">
@@ -242,21 +273,31 @@ const ProductDisplayPage = () => {
         {data.stock === 0 ? (
           <p className="text-lg text-red-500 my-2">Out of Stock</p>
         ) : (
-
           // <button className='my-4 px-4 py-1 bg-green-600 hover:bg-green-700 text-white rounded'>Add</button>
-          
+
           <div className="my-4 flex gap-1 items-center">
             <AddToCartButton data={data} />
 
             {/* wishlist button */}
-          
-            <button 
-            onClick={toggleWishlist}
-            className="flex items-center gap-2 bg-white border border-red-500 text-red-500 px-6 py-2 rounded-md hover:bg-red-700 hover:text-white transition duration-300 h-9 text-sm">
-              <FaHeart size={20} /> <span className="text-black hover:text-white font-medium">Wishlist</span>
+
+            <button
+              onClick={toggleWishlist}
+              className={`
+    flex items-center gap-2 px-6 py-2 rounded-md transition duration-300 h-9 text-sm 
+    ${
+      isWishlisted
+        ? "bg-red-700 text-white border-red-700"
+        : "bg-white border border-red-500 text-red-500 hover:bg-red-700 hover:text-white"
+    }`}
+            >
+              <FaHeart 
+              size={20} 
+              className={`transition duration-300 ${isWishlisted ? "text-white" : "text-red-500 hover:text-white"}`} 
+            /> 
+
+              <span className="font-medium">{isWishlisted ? "Wishlisted" : "Wishlist"}</span>
             </button>
           </div>
-
         )}
 
         <h2 className="font-semibold">Why shop from localBazaa₹? </h2>
@@ -281,7 +322,6 @@ const ProductDisplayPage = () => {
               </p>
             </div>
           </div>
-        
         </div>
 
         {/****only mobile */}

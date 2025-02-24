@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { FaHeart } from 'react-icons/fa'; // Wishlist icon
+import React, { useEffect, useState } from 'react';
+import { FaHeart, FaTimes } from 'react-icons/fa'; // Wishlist icon
 import { DisplayPriceInRupees } from '../utils/DisplayPriceInRupees';
 import { Link } from 'react-router-dom';
 import { valideURLConvert } from '../utils/valideURLConvert';
@@ -9,11 +9,40 @@ import Axios from '../utils/Axios';
 import SummaryApi from '../common/SummaryApi';
 import toast from 'react-hot-toast';
 
-const CardProduct = ({ data }) => {
+const CardProduct = ({ data, removeProduct }) => {
 
   const url = `/product/${valideURLConvert(data.name)}-${data._id}`;
 
   const [isWishlisted, setIsWishlisted] = useState(false);
+
+  // fetch wishlist when the component mounts 
+
+  useEffect(()=>{
+    checkIfWishlisted()
+  }, [])
+
+  // Check if product is already in wishlist 
+
+  const checkIfWishlisted = async () => {
+    try {
+      const response = await Axios(
+        SummaryApi.fetchUserWishlist
+      ) ; 
+
+      const wishlistedItems = response.data.data || [] ; 
+
+      // check if the product is already in the wishlist 
+
+      const alreadyWishlisted = wishlistedItems.some((item) => item.id === data.id) ; 
+
+      if(alreadyWishlisted){
+        setIsWishlisted(true)
+      }
+
+    } catch (error) {
+      console.log('Check if wishlisted error: ', error || error.message) ; 
+    }
+  }
 
   const toggleWishlist = async (e) => {
 
@@ -28,14 +57,23 @@ const CardProduct = ({ data }) => {
           ...SummaryApi.removeProductFromWishlist, 
           data: {product_id: data.id}
         })
+        setIsWishlisted(false) ; 
         toast.success('Removed from wishlist')
       }
       else{ 
-        await Axios({
+        const response = await Axios({
           ...SummaryApi.addProductToWishlist, 
           data: {product_id: data.id}
         })
-        toast.success('Added to wishlist')
+
+        if(response.data.success){
+          setIsWishlisted(true) ; 
+          toast.success('Added to wishlist')
+        }
+        else{
+          toast.error('Product already exists in your wishlist')
+        }
+
       }
       setIsWishlisted(!isWishlisted) ; 
     }catch(error){
@@ -46,8 +84,26 @@ const CardProduct = ({ data }) => {
 
   };
 
+  
   return (
     <Link to={url} className='border py-2 lg:p-4 grid gap-1 lg:gap-3 min-w-36 lg:min-w-52 rounded cursor-pointer bg-white relative'>
+
+      {/* Remove Product "X" button (only in wishlist page) */}
+
+      {
+        removeProduct && (
+          <button
+            className='absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full shadow-md hover:bg-red-600 transition'
+            onClick={(e) => {
+              e.preventDefault() ; 
+              e.stopPropagation() ; 
+              removeProduct(data.id)
+            }}
+          >
+            <FaTimes size={14}/>
+          </button>
+        )
+      }
       
       {/* Wishlist Icon (Floats Over Image, Doesn't Move Anything) */}
       

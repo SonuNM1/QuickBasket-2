@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { Link, useNavigate } from 'react-router-dom'
 import Divider from './Divider'
@@ -11,6 +11,7 @@ import { HiOutlineExternalLink } from "react-icons/hi";
 import isAdmin from '../utils/isAdmin'
 
 const UserMenu = ({close}) => {
+
    const user = useSelector((state)=> state.user)
    const dispatch = useDispatch()
    const navigate = useNavigate()
@@ -41,6 +42,27 @@ const UserMenu = ({close}) => {
         close()
       }
    }
+
+  //  wishlist count 
+
+  const [wishlistCount, setWishlistCount] = useState(0) ; 
+
+  const fetchWishlistCount = async () => {
+    try {
+      const response = await Axios(
+        SummaryApi.fetchUserWishlist
+      )
+
+      setWishlistCount(response.data.data.length) ; 
+    } catch (error) {
+      console.log('Fetch wishlist count error: ', error || error.message) ; 
+    }
+  }
+
+  useEffect(()=> {
+    fetchWishlistCount()
+  })
+
   return (
     <div>
         <div className='font-semibold'>My Account</div>
@@ -82,6 +104,17 @@ const UserMenu = ({close}) => {
 
             <Link onClick={handleClose} to={'/dashboard/wishlist'} className='px-2 hover:bg-orange-200 py-1' >
               Wishlist 
+
+              {/* show wishlist count in a badge */}
+
+              {
+                wishlistCount > 0 && (
+                  <span className='ml-8 text-red-500 font-bold text-sm'>
+                    {wishlistCount}
+                  </span>
+                )
+              }
+
             </Link>
 
             <Link onClick={handleClose} to={"/dashboard/address"} className='px-2 hover:bg-orange-200 py-1'>Save Address</Link>
