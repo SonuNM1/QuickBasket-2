@@ -4,11 +4,11 @@ export const addRating = async (req, res) => {
   try {
     const userId = req.userId;
 
-    console.log("Extracted user id:", userId);
+    // console.log("Extracted user id:", userId);
 
     const { product_id, rating, review } = req.body;
 
-    // console.log(req.body);
+    // // console.log(req.body);
 
     // Validation
     if (!userId) {
@@ -92,12 +92,12 @@ export const addRating = async (req, res) => {
 
 export const getRating = async (req, res) => {
   try {
-    console.log("Fetching user rating...");
+    // console.log("Fetching user rating...");
 
     const userId = req.userId; // Extract user ID from request
     const { product_id } = req.body; // Extract product_id from request body
 
-    console.log("________________", product_id, userId);
+    // console.log("________________", product_id, userId);
 
     if (!userId || !product_id) {
       return res.status(400).json({
@@ -116,7 +116,7 @@ export const getRating = async (req, res) => {
 
     const ratings = await executeQuery(query, [product_id, userId]);
 
-    console.log("User rating:", ratings);
+    // console.log("User rating:", ratings);
 
     if (ratings.length === 0) {
       return res.status(200).json({
@@ -136,11 +136,11 @@ export const getRating = async (req, res) => {
 
 export const getAllRating = async (req, res) => {
   try {
-    console.log("Fetching user rating...");
+    // console.log("Fetching user rating...");
 
     const { product_id } = req.body; // Extract product_id from request body
 
-    // console.log("________________", product_id, userId);
+    // // console.log("________________", product_id, userId);
 
     if (!userId || !product_id) {
       return res.status(400).json({
@@ -159,7 +159,7 @@ export const getAllRating = async (req, res) => {
 
     const ratings = await executeQuery(query, [product_id]);
 
-    console.log("User rating:", ratings);
+    // console.log("User rating:", ratings);
 
     if (ratings.length === 0) {
       return res.status(200).json({

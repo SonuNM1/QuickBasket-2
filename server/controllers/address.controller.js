@@ -16,7 +16,7 @@ export const addAddressController = async (request, response) => {
     const { address_line, city, state, pincode, country, mobile } =
       request.body;
 
-    console.log("new address", request.body);
+    // console.log("new address", request.body);
 
     if (!mobile || isNaN(Number(mobile))) {
       return response.status(400).json({
@@ -114,7 +114,7 @@ export const updateAddressController = async (request, response) => {
 
     // Ensure ID is provided
 
-    console.log("update", request.body);
+    // console.log("update", request.body);
     if (!_id) {
       return response.status(400).json({
         message: "Missing address ID",

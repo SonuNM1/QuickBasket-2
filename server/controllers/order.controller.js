@@ -7,7 +7,7 @@ export async function CashOnDeliveryOrderController(request, response) {
     const userId = request.userId;
     const { list_items, totalAmt, addressId, subTotalAmt } = request.body;
 
-    // console.log("hello oders", request.body);
+    // // console.log("hello oders", request.body);
 
     const orderQueries = list_items.map((el) => {
       return executeQuery(
@@ -45,7 +45,7 @@ export async function CashOnDeliveryOrderController(request, response) {
 // Get Order Details Controller
 export async function getOrderDetailsController(request, response) {
   try {
-    console.log("getting orders__");
+    // console.log("getting orders__");
     const userId = request.userId;
 
     const orderList = await executeQuery(
@@ -71,7 +71,7 @@ export async function getOrderDetailsController(request, response) {
       [userId]
     );
 
-    // console.log("orderList", orderList);
+    // // console.log("orderList", orderList);
 
     return response.json({
       message: "Order list",
@@ -80,7 +80,7 @@ export async function getOrderDetailsController(request, response) {
       success: true,
     });
   } catch (error) {
-    console.log(error);
+    // console.log(error);
     return response
       .status(500)
       .json({ message: error.message, error: true, success: false });
@@ -199,7 +199,7 @@ const getOrderProductItems = async ({
 export async function webhookStripe(request, response) {
   try {
     const event = request.body;
-    // console.log("event", event);
+    // // console.log("event", event);
 
     // Handle the event
     switch (event.type) {
@@ -237,7 +237,7 @@ export async function webhookStripe(request, response) {
           `;
         await executeQuery(insertQuery);
 
-        console.log("Order inserted successfully");
+        // console.log("Order inserted successfully");
 
         // Remove items from the shopping cart
         await executeQuery(
@@ -249,7 +249,7 @@ export async function webhookStripe(request, response) {
 
         break;
       default:
-        console.log(`Unhandled event type ${event.type}`);
+      // console.log(`Unhandled event type ${event.type}`);
     }
 
     // Return a response to acknowledge receipt of the event

@@ -55,7 +55,7 @@ export const addToWishlist = async (req, res) => {
     const { product_id } = req.body;
     const userId = req.userId; // Assuming authentication middleware extracts userId
 
-    console.log("Received wishlist request:", { product_id, userId });
+    // console.log("Received wishlist request:", { product_id, userId });
 
     if (!product_id || !userId) {
       return res.status(400).json({
@@ -116,7 +116,7 @@ export const getWishlist = async (req, res) => {
 
     const wishlistItems = await executeQuery(query, [userId]);
 
-    console.log("____________________________", wishlistItems);
+    // console.log("____________________________", wishlistItems);
 
     return res.status(200).json({
       message: "Wishlist fetched successfully",
