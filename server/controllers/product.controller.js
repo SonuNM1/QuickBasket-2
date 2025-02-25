@@ -94,7 +94,7 @@ export const createProductController = async (request, response) => {
         if (!option || !price) continue; // skip invalid variations
 
         await executeQuery(
-          `INSERT INTO product_variation (product_id, attribute, price) VALUES (?, ?, ?)`,
+          `INSERT INTO product_variations (product_id, attribute, price) VALUES (?, ?, ?)`,
           [productId, option, parseFloat(price)]
         );
       }
@@ -166,14 +166,12 @@ export const getProductByCategory = async (request, response) => {
 
 export const getProductDetails = async (request, response) => {
   try {
-    console.log("getting product by category_______________________");
-    const { productId } = request.body;
 
-    console.log("getting product");
+    const { productId } = request.body;
 
     if (!productId) {
       return response.status(400).json({
-        message: "Provide productId",
+        message: "Product ID is required",
         error: true,
         success: false,
       });
