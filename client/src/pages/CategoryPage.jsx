@@ -11,6 +11,7 @@ import AxiosToastError from '../utils/AxiosToastError'
 import { useSelector } from 'react-redux'
 
 const CategoryPage = () => {
+    
     const [openUploadCategory,setOpenUploadCategory] = useState(false)
     const [loading,setLoading] = useState(false)
     const [categoryData,setCategoryData] = useState([])

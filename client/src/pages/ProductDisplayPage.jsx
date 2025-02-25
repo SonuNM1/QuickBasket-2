@@ -284,7 +284,7 @@ const ProductDisplayPage = () => {
             )}
             {data.discount && (
               <p className="font-bold text-green-600 lg:text-2xl">
-                {data.discount}%{" "}
+                {Math.round(data.discount)}%{" "}
                 <span className="text-base text-neutral-500">Discount</span>
               </p>
             )}
@@ -343,7 +343,7 @@ const ProductDisplayPage = () => {
               <div className="font-semibold">Best Prices & Offers</div>
               <p>
                 Best price destination with offers directly from the
-                nanufacturers.
+                manufacturers.
               </p>
             </div>
           </div>

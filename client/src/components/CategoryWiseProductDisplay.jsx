@@ -10,6 +10,7 @@ import { useSelector } from "react-redux";
 import { valideURLConvert } from "../utils/valideURLConvert";
 
 const CategoryWiseProductDisplay = ({ id, name }) => {
+  
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const containerRef = useRef();

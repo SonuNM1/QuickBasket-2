@@ -61,8 +61,6 @@ function App() {
     }
   }
 
-  
-
   useEffect(()=>{
     fetchUser()
     fetchCategory()

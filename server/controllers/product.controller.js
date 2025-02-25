@@ -1,7 +1,6 @@
 import ProductModel from "../models/product.model.js";
 import { executeQuery } from "../utils/DBUtils.js";
 
-
 export const createProductController = async (request, response) => {
   try {
     const {
@@ -14,12 +13,13 @@ export const createProductController = async (request, response) => {
       price,
       discount,
       description,
-      variations  // from frontend 
+      variations, // from frontend
     } = request.body;
 
     console.log("Received request body:", request.body);
 
     // Validate required fields
+
     if (!name || !image || !unit || !price || !description) {
       return response.status(400).json({
         message: "Enter required fields",
@@ -29,6 +29,7 @@ export const createProductController = async (request, response) => {
     }
 
     // Ensure category and subCategory are valid JSON arrays and contain valid IDs
+    
     const validCategories = Array.isArray(category)
       ? category
           .filter(
@@ -82,21 +83,20 @@ export const createProductController = async (request, response) => {
       });
     }
 
-    // inserting and saving variations in the database 
+    // inserting and saving variations in the database
 
-    const productId = product.insertId ; 
+    const productId = product.insertId;
 
-    if(variations && Array.isArray(variations)){
-      for(const variation of variations){
-        const {option, price} = variation ; 
+    if (variations && Array.isArray(variations)) {
+      for (const variation of variations) {
+        const { option, price } = variation;
 
-        if(!option || !price) continue ; // skip invalid variations 
+        if (!option || !price) continue; // skip invalid variations
 
         await executeQuery(
-          `INSERT INTO product_variation (product_id, attribute, price) VALUES (?, ?, ?)`, 
+          `INSERT INTO product_variation (product_id, attribute, price) VALUES (?, ?, ?)`,
           [productId, option, parseFloat(price)]
-        )
-
+        );
       }
     }
 
@@ -306,6 +306,56 @@ export const searchProduct = async (request, response) => {
   }
 };
 
+// export const getProductByCategoryAndSubCategory = async (request, response) => {
+//   try {
+//     const { categoryId, subCategoryId, page = 1, limit = 10 } = request.body;
+
+//     console.log("Fetching products for categoryId:", categoryId, "subCategoryId:", subCategoryId);
+
+//     if (!categoryId || !subCategoryId) {
+//       return response.status(400).json({
+//         message: "Provide categoryId and subCategoryId",
+//         error: true,
+//         success: false,
+//       });
+//     }
+
+//     const offset = (page - 1) * limit;
+
+//     const query = `
+//       SELECT * FROM products
+//       WHERE category = ? AND subCategory = ?
+//       ORDER BY created_at DESC
+//       LIMIT ? OFFSET ?
+//     `;
+
+//     const countQuery = `
+//       SELECT COUNT(*) AS totalCount FROM products
+//       WHERE category = ? AND subCategory = ?
+//     `;
+
+//     const [data, dataCount] = await Promise.all([
+//       executeQuery(query, [categoryId, subCategoryId, parseInt(limit), offset]),
+//       executeQuery(countQuery, [categoryId, subCategoryId]),
+//     ]);
+
+//     return response.json({
+//       message: "Product list",
+//       data: data,
+//       totalCount: dataCount[0]?.totalCount || 0,
+//       page: page,
+//       limit: limit,
+//       success: true,
+//       error: false,
+//     });
+//   } catch (error) {
+//     return response.status(500).json({
+//       message: error.message || error,
+//       error: true,
+//       success: false,
+//     });
+//   }
+// };
 
 export const getProductByCategoryAndSubCategory = async (request, response) => {
   try {
@@ -321,22 +371,47 @@ export const getProductByCategoryAndSubCategory = async (request, response) => {
 
     const offset = (page - 1) * limit;
 
+    // ✅ Use JSON_CONTAINS() to filter category and subcategory properly
+
+    // const query = `
+    //   SELECT * FROM products
+    //   WHERE JSON_CONTAINS(category, ?)
+    //   AND JSON_CONTAINS(subCategory, ?)
+    //   ORDER BY created_at DESC
+    //   LIMIT ? OFFSET ?
+    // `;
+
+    // const countQuery = `
+    //   SELECT COUNT(*) AS totalCount FROM products
+    //   WHERE JSON_CONTAINS(category, ?)
+    //   AND JSON_CONTAINS(subCategory, ?)
+    // `;
+
+    // const [data, dataCount] = await Promise.all([
+    //   executeQuery(query, [`"${categoryId}"`, `"${subCategoryId}"`, parseInt(limit), offset]),
+    //   executeQuery(countQuery, [`"${categoryId}"`, `"${subCategoryId}"`]),
+    // ]);
+
     const query = `
-      SELECT * FROM products 
-      WHERE category = ? AND subCategory = ? 
-      ORDER BY created_at DESC 
-      LIMIT ? OFFSET ?
-    `;
+  SELECT * FROM products 
+  WHERE JSON_CONTAINS(category, CAST(? AS JSON)) 
+  AND JSON_CONTAINS(subCategory, CAST(? AS JSON)) 
+  ORDER BY created_at DESC 
+  LIMIT ? OFFSET ?
+`;
 
     const countQuery = `
-      SELECT COUNT(*) AS totalCount FROM products 
-      WHERE category = ? AND subCategory = ?
-    `;
+  SELECT COUNT(*) AS totalCount FROM products 
+  WHERE JSON_CONTAINS(category, CAST(? AS JSON)) 
+  AND JSON_CONTAINS(subCategory, CAST(? AS JSON))
+`;
 
     const [data, dataCount] = await Promise.all([
       executeQuery(query, [categoryId, subCategoryId, parseInt(limit), offset]),
       executeQuery(countQuery, [categoryId, subCategoryId]),
     ]);
+
+    console.log("Fetched Products from product controller:", data);
 
     return response.json({
       message: "Product list",
