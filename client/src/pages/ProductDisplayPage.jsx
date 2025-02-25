@@ -77,7 +77,10 @@ const ProductDisplayPage = () => {
   useEffect(() => {
     fetchProductDetails();
     checkIfWishlisted();
+<<<<<<< HEAD
     fetchAverageRating();
+=======
+>>>>>>> main
   }, [params]);
 
   const handleScrollRight = () => {
@@ -87,32 +90,6 @@ const ProductDisplayPage = () => {
   const handleScrollLeft = () => {
     imageContainer.current.scrollLeft -= 100;
   };
-
-  // const toggleWishlist = async (e) => {
-
-  //   e.preventDefault();
-  //   e.stopPropagation();
-
-  //   try {
-  //     if (isWishlisted) {
-  //       await Axios({
-  //         ...SummaryApi.removeProductFromWishlist,
-  //         data: { product_id: productId },
-  //       });
-  //       toast.success("Removed from wishlist");
-  //     } else {
-  //       await Axios({
-  //         ...SummaryApi.addProductToWishlist,
-  //         data: { product_id: productId },
-  //       });
-  //       toast.success("Added to wishlist");
-  //     }
-  //     setIsWishlisted(!isWishlisted);
-  //   } catch (error) {
-  //     console.error("Wishlist error:", error);
-  //     toast.error("Error updating wishlist");
-  //   }
-  // };
 
   const toggleWishlist = async (e) => {
     e.preventDefault();

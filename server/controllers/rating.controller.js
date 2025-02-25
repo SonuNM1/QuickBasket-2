@@ -52,8 +52,8 @@ import { executeQuery, convertBuffers } from "../utils/DBUtils.js";
 
 //     return res.status(201).json({
 //       message: 'Review submitted successfully!',
-//       success: true, 
-//       error: false 
+//       success: true,
+//       error: false
 //     })
 
 //   } catch (error) {
@@ -130,12 +130,11 @@ export const addRating = async (req, res) => {
   }
 };
 
-
 // export const getAllRating = async (req, res) => {
 //   try {
 
-//     const userId = req.userId ; // logged-in user ID 
-//     const { product_id } = req.body; 
+//     const userId = req.userId ; // logged-in user ID
+//     const { product_id } = req.body;
 
 //     if (!product_id) {
 //       return res.status(400).json({
@@ -145,7 +144,7 @@ export const addRating = async (req, res) => {
 //     }
 
 //     const query = `
-//     SELECT r.id AS review_id, r.rating, r.review, r.created_at, u.name AS username, 
+//     SELECT r.id AS review_id, r.rating, r.review, r.created_at, u.name AS username,
 //            (r.user_id = ?) AS isOwner  -- Check if the review belongs to logged-in user
 //     FROM ratings r
 //     JOIN users u ON r.user_id = u.id
@@ -166,7 +165,7 @@ export const addRating = async (req, res) => {
 
 //     return res.status(200).json({
 //       message: 'Ratings fetched successfully',
-//       data: ratings   // return all ratings 
+//       data: ratings   // return all ratings
 //     })
 
 //   } catch (error) {
@@ -214,14 +213,15 @@ export const getAllRating = async (req, res) => {
   }
 };
 
-
 export const getRating = async (req, res) => {
   try {
+    // console.log("Fetching user rating...");
     // console.log("Fetching user rating...");
 
     const userId = req.userId; // Extract user ID from request
     const { product_id } = req.body; // Extract product_id from request body
 
+    // console.log("________________", product_id, userId);
     // console.log("________________", product_id, userId);
 
     if (!userId || !product_id) {
@@ -242,6 +242,7 @@ export const getRating = async (req, res) => {
     const ratings = await executeQuery(query, [product_id, userId]);
 
     // console.log("User rating:", ratings);
+    // console.log("User rating:", ratings);
 
     if (ratings.length === 0) {
       return res.status(200).json({
@@ -257,117 +258,112 @@ export const getRating = async (req, res) => {
     console.error("Error fetching user rating:", error);
     return res.status(500).json({ message: "Internal Server Error" });
   }
-}
+};
 
 export const editRating = async (req, res) => {
   try {
-    const userId = req.userId ; 
-    const {review_id , review } = req.body ; 
+    const userId = req.userId;
+    const { review_id, review } = req.body;
 
-    if(!userId || !review_id || !review.trim()){
+    if (!userId || !review_id || !review.trim()) {
       return res.status(400).json({
-        message: 'Review ID and updated review text are required',
-        error: true, 
-        success: false 
-      })
+        message: "Review ID and updated review text are required",
+        error: true,
+        success: false,
+      });
     }
 
-    // update only if the review belongs to the user 
+    // update only if the review belongs to the user
 
     const updateQuery = `
       UPDATE ratings 
       SET review = ?, created_at = NOW()
       WHERE id = ? AND user_id = ?
-    ` ; 
+    `;
 
-    const result = await executeQuery(updateQuery, [review, review_id, userId])
+    const result = await executeQuery(updateQuery, [review, review_id, userId]);
 
-    if(result.affectedRows === 0){
+    if (result.affectedRows === 0) {
       return res.status(403).json({
-        message: 'Unauthorized: Cannot edit this review',
-        error: true 
-      })
+        message: "Unauthorized: Cannot edit this review",
+        error: true,
+      });
     }
 
     return res.status(200).json({
-      message: 'Review updated successfully',
-      success: true 
-    })
-
+      message: "Review updated successfully",
+      success: true,
+    });
   } catch (error) {
     console.error("Edit rating error:", error);
     return res.status(500).json({ message: "Internal Server Error" });
   }
-}
+};
 
 export const deleteRating = async (req, res) => {
   try {
-    const userId = req.userId ; 
-    const {review_id} = req.body ; 
+    const userId = req.userId;
+    const { review_id } = req.body;
 
-    if(!userId || !review_id){
+    if (!userId || !review_id) {
       return res.status(400).json({
-        message: 'Review ID is required',
-        error: false, 
-        success: true 
-      })
+        message: "Review ID is required",
+        error: false,
+        success: true,
+      });
     }
 
-    // Delete only if the review belongs to the user 
+    // Delete only if the review belongs to the user
 
     const deleteQuery = `
       DELETE FROM ratings
       WHERE id = ? AND user_id = ? 
-    `
+    `;
 
-    const result = await executeQuery(deleteQuery, [review_id, userId]) ; 
+    const result = await executeQuery(deleteQuery, [review_id, userId]);
 
-    if(result.affectedRows === 0){
+    if (result.affectedRows === 0) {
       return res.status(403).json({
-        message: 'Unauthorized: Cannot delete this review',
-        error: true 
-      })
+        message: "Unauthorized: Cannot delete this review",
+        error: true,
+      });
     }
 
     return res.status(200).json({
-      message: 'Review deleted successfully!', 
-      success: true 
-    })
-
+      message: "Review deleted successfully!",
+      success: true,
+    });
   } catch (error) {
     console.error("Delete rating error:", error);
     return res.status(500).json({ message: "Internal Server Error" });
   }
-}
+};
 
 export const getAverageRating = async (req, res) => {
-
-  console.log("Request Body:", req.body); 
+  console.log("Request Body:", req.body);
 
   try {
-    const {product_id} = req.body ; 
+    const { product_id } = req.body;
 
-    if(!product_id){
+    if (!product_id) {
       return res.status(400).json({
-        message: "Product ID doesn't exist", 
-        error: false, 
-        success: true 
-      })
+        message: "Product ID doesn't exist",
+        error: false,
+        success: true,
+      });
     }
 
-    const query = `SELECT AVG(rating) as average_rating FROM ratings WHERE product_id = ?`
+    const query = `SELECT AVG(rating) as average_rating FROM ratings WHERE product_id = ?`;
 
-    const result = await executeQuery(query, [product_id]) ; 
+    const result = await executeQuery(query, [product_id]);
 
     return res.status(200).json({
       message: "Average rating fetched successfully",
       success: true,
-      data: { average_rating: parseFloat(result[0]?.average_rating) || 0 },  // ✅ Convert to number
+      data: { average_rating: parseFloat(result[0]?.average_rating) || 0 }, // ✅ Convert to number
     });
-    
-
   } catch (error) {
     console.error("Error fetching average rating:", error);
     return res.status(500).json({ message: "Internal Server Error" });
   }
-}
+};

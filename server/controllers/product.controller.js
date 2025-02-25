@@ -16,8 +16,6 @@ export const createProductController = async (request, response) => {
       variations, // from frontend
     } = request.body;
 
-    console.log("Received request body:", request.body);
-
     // Validate required fields
 
     if (!name || !image || !unit || !price || !description) {
@@ -29,23 +27,13 @@ export const createProductController = async (request, response) => {
     }
 
     // Ensure category and subCategory are valid JSON arrays and contain valid IDs
-    
+
     const validCategories = Array.isArray(category)
-      ? category
-          .filter(
-            (item) =>
-              item.id !== null && item.id !== undefined && item.id !== ""
-          )
-          .map((item) => item.id)
+      ? category.filter((item) => item?.id).map((item) => item.id)
       : [];
 
     const validSubCategories = Array.isArray(subCategory)
-      ? subCategory
-          .filter(
-            (item) =>
-              item.id !== null && item.id !== undefined && item.id !== ""
-          )
-          .map((item) => item.id)
+      ? subCategory.filter((item) => item?.id).map((item) => item.id)
       : [];
 
     if (validCategories.length === 0 || validSubCategories.length === 0) {
@@ -56,60 +44,74 @@ export const createProductController = async (request, response) => {
       });
     }
 
+    // Start transaction for data consistency
+    await executeQuery("START TRANSACTION");
+
     // Insert product into the database
     const product = await executeQuery(
       `INSERT INTO products 
-        (name, image, category, subCategory,unit,stock,price,discount,description)
+        (name, image, category, subCategory, unit, stock, price, discount, description)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         name,
         JSON.stringify(image),
-        JSON.stringify(validCategories), // Store as JSON string
-        JSON.stringify(validSubCategories), // Store as JSON string
+        JSON.stringify(validCategories),
+        JSON.stringify(validSubCategories),
         unit || "",
         stock ?? 0, // Default stock to 0 if not provided
         parseFloat(price),
-        parseFloat(discount) ?? 0, // Default discount to 0 if not provided
+        parseFloat(discount) || 0, // Default discount to 0 if not provided
         description ?? "",
       ]
     );
 
-    if (!product) {
-      return response.json({
+    if (!product || !product.insertId) {
+      await executeQuery("ROLLBACK");
+      return response.status(500).json({
         message: "Failed to create product!",
-        data: [],
         error: true,
         success: false,
       });
     }
 
-    // inserting and saving variations in the database
-
     const productId = product.insertId;
 
-    if (variations && Array.isArray(variations)) {
+    // Insert variations if provided
+    if (Array.isArray(variations) && variations.length > 0) {
       for (const variation of variations) {
         const { option, price } = variation;
 
-        if (!option || !price) continue; // skip invalid variations
+        if (!option || !price) continue; // Skip invalid variations
 
-        await executeQuery(
+        const result = await executeQuery(
           `INSERT INTO product_variation (product_id, attribute, price) VALUES (?, ?, ?)`,
           [productId, option, parseFloat(price)]
         );
+
+        if (!result) {
+          await executeQuery("ROLLBACK");
+          return response.status(500).json({
+            message: "Failed to insert variations!",
+            error: true,
+            success: false,
+          });
+        }
       }
     }
 
+    // Commit transaction if everything succeeds
+    await executeQuery("COMMIT");
+
     return response.json({
       message: "Product Created Successfully with Variations",
-      data: product,
+      data: { productId, name },
       error: false,
       success: true,
     });
   } catch (error) {
-    console.log(error);
+    await executeQuery("ROLLBACK"); // Rollback if there's an error
     return response.status(500).json({
-      message: error.message || error,
+      message: error.message || "Server Error",
       error: true,
       success: false,
     });
@@ -118,7 +120,7 @@ export const createProductController = async (request, response) => {
 
 export const getProductByCategory = async (request, response) => {
   try {
-    console.log("getting products ");
+    // console.log("getting products ");
     const { id } = request.body;
 
     if (!id) {
@@ -146,7 +148,7 @@ export const getProductByCategory = async (request, response) => {
 
     const products = await executeQuery(query, [String(id)]);
 
-    console.log("htios is products", products);
+    // // console.log("htios is products", products);
 
     return response.json({
       message: "Category product list",
@@ -164,12 +166,63 @@ export const getProductByCategory = async (request, response) => {
   }
 };
 
+// export const getProductDetails = async (request, response) => {
+//   try {
+//     // console.log("getting product by category_______________________");
+//     const { productId } = request.body;
+
+//     // // console.log("getting product");
+
+//     if (!productId) {
+//       return response.status(400).json({
+//         message: "Provide productId",
+//         error: true,
+//         success: false,
+//       });
+//     }
+
+//     const query = `
+//       SELECT
+//         p.*,
+//         (
+//           SELECT JSON_ARRAYAGG(
+//             JSON_OBJECT('_id', c.id, 'name', c.name)
+//           )
+//           FROM categories c
+//           WHERE JSON_CONTAINS(p.category, JSON_QUOTE(CAST(c.id AS CHAR)), '$')
+//         ) AS category_details,
+//         (
+//           SELECT JSON_ARRAYAGG(
+//             JSON_OBJECT('_id', sc.id, 'name', sc.name)
+//           )
+//           FROM sub_categories sc
+//           WHERE JSON_CONTAINS(p.subCategory, JSON_QUOTE(CAST(sc.id AS CHAR)), '$')
+//         ) AS subCategory_details
+//       FROM products p
+//       WHERE p.id = ?
+//     `;
+
+//     const product = await executeQuery(query, [productId]);
+
+//     return response.json({
+//       message: "Product details",
+//       data: product.length ? product[0] : null,
+//       error: false,
+//       success: true,
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     return response.status(500).json({
+//       message: error.message || error,
+//       error: true,
+//       success: false,
+//     });
+//   }
+// };
+
 export const getProductDetails = async (request, response) => {
   try {
-    console.log("getting product by category_______________________");
     const { productId } = request.body;
-
-    console.log("getting product");
 
     if (!productId) {
       return response.status(400).json({
@@ -195,7 +248,14 @@ export const getProductDetails = async (request, response) => {
           ) 
           FROM sub_categories sc 
           WHERE JSON_CONTAINS(p.subCategory, JSON_QUOTE(CAST(sc.id AS CHAR)), '$')
-        ) AS subCategory_details
+        ) AS subCategory_details,
+        (
+          SELECT JSON_ARRAYAGG(
+            JSON_OBJECT('_id', v.id, 'attribute', v.attribute, 'price', v.price)
+          ) 
+          FROM product_variation v
+          WHERE v.product_id = p.id
+        ) AS variations
       FROM products p
       WHERE p.id = ?
     `;
@@ -294,7 +354,7 @@ export const searchProduct = async (request, response) => {
       limit: limit,
     });
   } catch (error) {
-    console.log("Search error: ", error || error.message);
+    // console.log("Search error: ", error || error.message);
     return response.status(500).json({
       message:
         error.message ||
@@ -306,64 +366,15 @@ export const searchProduct = async (request, response) => {
   }
 };
 
-// export const getProductByCategoryAndSubCategory = async (request, response) => {
-//   try {
-//     const { categoryId, subCategoryId, page = 1, limit = 10 } = request.body;
-
-//     console.log("Fetching products for categoryId:", categoryId, "subCategoryId:", subCategoryId);
-
-//     if (!categoryId || !subCategoryId) {
-//       return response.status(400).json({
-//         message: "Provide categoryId and subCategoryId",
-//         error: true,
-//         success: false,
-//       });
-//     }
-
-//     const offset = (page - 1) * limit;
-
-//     const query = `
-//       SELECT * FROM products
-//       WHERE category = ? AND subCategory = ?
-//       ORDER BY created_at DESC
-//       LIMIT ? OFFSET ?
-//     `;
-
-//     const countQuery = `
-//       SELECT COUNT(*) AS totalCount FROM products
-//       WHERE category = ? AND subCategory = ?
-//     `;
-
-//     const [data, dataCount] = await Promise.all([
-//       executeQuery(query, [categoryId, subCategoryId, parseInt(limit), offset]),
-//       executeQuery(countQuery, [categoryId, subCategoryId]),
-//     ]);
-
-//     return response.json({
-//       message: "Product list",
-//       data: data,
-//       totalCount: dataCount[0]?.totalCount || 0,
-//       page: page,
-//       limit: limit,
-//       success: true,
-//       error: false,
-//     });
-//   } catch (error) {
-//     return response.status(500).json({
-//       message: error.message || error,
-//       error: true,
-//       success: false,
-//     });
-//   }
-// };
-
 export const getProductByCategoryAndSubCategory = async (request, response) => {
   try {
     const { categoryId, subCategoryId, page = 1, limit = 10 } = request.body;
 
+    console.log("Received IDs:", subCategoryId);
+
     if (!categoryId || !subCategoryId) {
       return response.status(400).json({
-        message: "Provide categoryId and subCategoryId",
+        message: "Provide both categoryId and subCategoryId",
         error: true,
         success: false,
       });
@@ -371,47 +382,27 @@ export const getProductByCategoryAndSubCategory = async (request, response) => {
 
     const offset = (page - 1) * limit;
 
-    // ✅ Use JSON_CONTAINS() to filter category and subcategory properly
-
-    // const query = `
-    //   SELECT * FROM products
-    //   WHERE JSON_CONTAINS(category, ?)
-    //   AND JSON_CONTAINS(subCategory, ?)
-    //   ORDER BY created_at DESC
-    //   LIMIT ? OFFSET ?
-    // `;
-
-    // const countQuery = `
-    //   SELECT COUNT(*) AS totalCount FROM products
-    //   WHERE JSON_CONTAINS(category, ?)
-    //   AND JSON_CONTAINS(subCategory, ?)
-    // `;
-
-    // const [data, dataCount] = await Promise.all([
-    //   executeQuery(query, [`"${categoryId}"`, `"${subCategoryId}"`, parseInt(limit), offset]),
-    //   executeQuery(countQuery, [`"${categoryId}"`, `"${subCategoryId}"`]),
-    // ]);
-
+    // ✅ Fix: Use JSON_OVERLAPS for multiple IDs (MySQL 8.0+)
     const query = `
-  SELECT * FROM products 
-  WHERE JSON_CONTAINS(category, CAST(? AS JSON)) 
-  AND JSON_CONTAINS(subCategory, CAST(? AS JSON)) 
-  ORDER BY created_at DESC 
-  LIMIT ? OFFSET ?
-`;
+     SELECT * FROM products 
+WHERE JSON_OVERLAPS(category, JSON_ARRAY(?))  
+ORDER BY created_at DESC 
+LIMIT ? OFFSET ?;
+
+    `;
 
     const countQuery = `
-  SELECT COUNT(*) AS totalCount FROM products 
-  WHERE JSON_CONTAINS(category, CAST(? AS JSON)) 
-  AND JSON_CONTAINS(subCategory, CAST(? AS JSON))
-`;
+      SELECT COUNT(*) AS totalCount FROM products 
+      WHERE JSON_OVERLAPS(category, JSON_ARRAY(?))
+
+    `;
 
     const [data, dataCount] = await Promise.all([
-      executeQuery(query, [categoryId, subCategoryId, parseInt(limit), offset]),
+      executeQuery(query, [parseInt(categoryId), limit, offset]),
       executeQuery(countQuery, [categoryId, subCategoryId]),
     ]);
 
-    console.log("Fetched Products from product controller:", data);
+    console.log(data);
 
     return response.json({
       message: "Product list",
@@ -423,6 +414,7 @@ export const getProductByCategoryAndSubCategory = async (request, response) => {
       error: false,
     });
   } catch (error) {
+    console.error("Error fetching products:", error);
     return response.status(500).json({
       message: error.message || error,
       error: true,
@@ -433,7 +425,7 @@ export const getProductByCategoryAndSubCategory = async (request, response) => {
 
 export const getProductController = async (request, response) => {
   try {
-    console.log("Fetching products...");
+    // console.log("Fetching products...");
 
     let { page, limit, search, category, subCategory } = request.body;
 
@@ -527,7 +519,7 @@ export const getProductController = async (request, response) => {
       data: data,
     });
   } catch (error) {
-    console.log(error);
+    // console.log(error);
     return response.status(500).json({
       message: error.message || error,
       error: true,
@@ -548,7 +540,7 @@ export const updateProductDetails = async (request, response) => {
       });
     }
 
-    // console.log("Request Body:", request.body);
+    // // console.log("Request Body:", request.body);
 
     // Extract only `_id` values for category and subCategory
     const extractIds = (items) =>
@@ -618,7 +610,7 @@ export const updateProductDetails = async (request, response) => {
     )} WHERE id = ?`;
     values.push(_id);
 
-    // console.log("Query:", updateQuery, "Values:", values);
+    // // console.log("Query:", updateQuery, "Values:", values);
 
     const updateResult = await executeQuery(updateQuery, values);
 

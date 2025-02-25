@@ -41,7 +41,7 @@ export const AddSubCategoryController = async (req, res) => {
       [name, image, JSON.stringify(category_ids)]
     );
 
-    console.log("Insert results:", result);
+    // console.log("Insert results:", result);
 
     return res.json({
       message: "SubCategory created successfully",
@@ -80,7 +80,7 @@ export const getSubCategoryController = async (req, res) => {
        ORDER BY sub_categories.created_at DESC`
     );
 
-    console.log(subCategories);
+    // console.log(subCategories);
 
     // Parse category names JSON if necessary
     // subCategories.forEach((subCategory) => {
@@ -108,7 +108,7 @@ export const updateSubCategoryController = async (req, res) => {
   try {
     const { _id, name, image, category } = req.body;
 
-    console.log("________body", req.body);
+    // console.log("________body", req.body);
 
     if (!name || !image || !category || !Array.isArray(category)) {
       return res.status(400).json({

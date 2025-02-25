@@ -87,7 +87,7 @@ export async function registerUserController(request, response) {
       email,
     ]);
 
-    // console.log(users);
+    // // console.log(users);
 
     // Convert buffer fields if necessary
     const formattedUser = convertBuffers(users);
@@ -114,7 +114,7 @@ export async function registerUserController(request, response) {
 
     const VerifyEmailUrl = `${process.env.FRONTEND_URL}/verify-email?code=${newUserId}`;
 
-    console.log(VerifyEmailUrl);
+    // // console.log(VerifyEmailUrl);
 
     // Send verification email
     const verifyEmail = await sendEmail({
@@ -247,7 +247,7 @@ export async function loginController(request, response) {
 
     const user = formattedUser[0];
 
-    // console.log(user);
+    // // console.log(user);
 
     if (user.status !== "Active") {
       return response.status(400).json({
@@ -270,7 +270,7 @@ export async function loginController(request, response) {
     const accesstoken = await generatedAccessToken(user.id);
     const refreshToken = await genertedRefreshToken(user.id);
 
-    // console.log(accesstoken, refreshToken);
+    // // console.log(accesstoken, refreshToken);
 
     const updateResults = await executeQuery(
       "Update users set last_login_date=?  where id=?",
@@ -410,7 +410,7 @@ export async function verifyEmailController(request, response) {
 
     const user = await executeQuery("Select * from users where id=?", [code]);
 
-    console.log(user);
+    // console.log(user);
 
     if (!user) {
       return response.status(400).json({
@@ -425,7 +425,7 @@ export async function verifyEmailController(request, response) {
       [code]
     );
 
-    console.log(updateUser);
+    // console.log(updateUser);
 
     return response.json({
       message: "Verify email done",
@@ -445,11 +445,11 @@ export async function verifyEmailController(request, response) {
 //   try {
 //     // Log userId from auth middleware
 //     const userId = request.userId; // auth middleware
-//     console.log("User ID from auth middleware:", userId);
+//     // console.log("User ID from auth middleware:", userId);
 
 //     // Log the file received by multer
 //     const image = request.file; // multer middleware
-//     console.log("File received by multer:", image);
+//     // console.log("File received by multer:", image);
 
 //     // Check if no file is provided
 //     if (!image) {
@@ -461,12 +461,12 @@ export async function verifyEmailController(request, response) {
 //     }
 
 //     // Log before uploading to Cloudinary
-//     console.log("Uploading file to Cloudinary...");
+//     // console.log("Uploading file to Cloudinary...");
 //     const upload = await uploadImageClodinary(image);
-//     console.log("Cloudinary upload result:", upload);
+//     // console.log("Cloudinary upload result:", upload);
 
 //     // Log before updating user in the database
-//     console.log("Updating user in the database...");
+//     // console.log("Updating user in the database...");
 //     const updateUser = await UserModel.findByIdAndUpdate(
 //       userId,
 //       {
@@ -485,7 +485,7 @@ export async function verifyEmailController(request, response) {
 //     }
 
 //     // Log success response
-//     console.log("Avatar upload successful for user:", userId);
+//     // console.log("Avatar upload successful for user:", userId);
 
 //     return response.json({
 //       message: "Profile uploaded successfully",
@@ -512,11 +512,11 @@ export async function uploadAvatar(request, response) {
   try {
     // Log userId from auth middleware
     const userId = request.userId; // auth middleware
-    console.log("User ID from auth middleware:", userId);
+    // console.log("User ID from auth middleware:", userId);
 
     // Log the file received by multer
     const image = request.file; // multer middleware
-    console.log("File received by multer:", image);
+    // console.log("File received by multer:", image);
 
     // Check if no file is provided
     if (!image) {
@@ -528,16 +528,16 @@ export async function uploadAvatar(request, response) {
     }
 
     // Log before uploading to Cloudinary
-    console.log("Uploading file to Cloudinary...");
+    // console.log("Uploading file to Cloudinary...");
     const upload = await uploadImageClodinary(image);
-    console.log("Cloudinary upload result:", upload.url);
+    // console.log("Cloudinary upload result:", upload.url);
 
     const updateUser = await executeQuery(
       "update users set avatar=? where id=?",
       [upload.url, userId]
     );
 
-    console.log("updated", updateUser);
+    // console.log("updated", updateUser);
 
     // Check if user update was successful
     if (!updateUser) {
@@ -549,7 +549,7 @@ export async function uploadAvatar(request, response) {
     }
 
     // Log success response
-    console.log("Avatar upload successful for user:", userId);
+    // console.log("Avatar upload successful for user:", userId);
 
     return response.json({
       message: "Profile uploaded successfully",
@@ -659,12 +659,12 @@ export async function updateUserDetails(request, response) {
 // export async function forgotPasswordController(request, response) {
 //   try {
 //     const { email } = request.body;
-//     console.log("Request received for email:", email);
+//     // console.log("Request received for email:", email);
 
 //     const user = await UserModel.findOne({ email });
 
 //     if (!user) {
-//       console.log("Email not available:", email);
+//       // console.log("Email not available:", email);
 //       return response.status(400).json({
 //         message: "Email not available",
 //         error: true,
@@ -674,14 +674,14 @@ export async function updateUserDetails(request, response) {
 
 //     const otp = generatedOtp();
 //     const expireTime = new Date() + 60 * 60 * 1000; // 1hr
-//     console.log("Generated OTP:", otp, "Expiry Time:", expireTime);
+//     // console.log("Generated OTP:", otp, "Expiry Time:", expireTime);
 
 //     const update = await UserModel.findByIdAndUpdate(user._id, {
 //       forgot_password_otp: otp,
 //       forgot_password_expiry: new Date(expireTime).toISOString(),
 //     });
 
-//     console.log("Database updated for user:", user._id);
+//     // console.log("Database updated for user:", user._id);
 
 //     await sendEmail({
 //       sendTo: email,
@@ -692,7 +692,7 @@ export async function updateUserDetails(request, response) {
 //       }),
 //     });
 
-//     console.log("Email sent to:", email);
+//     // console.log("Email sent to:", email);
 
 //     return response.json({
 //       message: "Check your email",
@@ -719,7 +719,7 @@ export async function forgotPasswordController(request, response) {
     ]);
 
     if (!user[0]) {
-      console.log("Email not available:", email);
+      // console.log("Email not available:", email);
       return response.status(400).json({
         message: "Email not available",
         error: true,
@@ -729,7 +729,7 @@ export async function forgotPasswordController(request, response) {
 
     const otp = generatedOtp();
     const expireTime = new Date() + 60 * 60 * 1000; // 1hr
-    console.log("Generated OTP:", otp, "Expiry Time:", expireTime);
+    // console.log("Generated OTP:", otp, "Expiry Time:", expireTime);
 
     const update = await executeQuery(
       `
@@ -745,7 +745,7 @@ export async function forgotPasswordController(request, response) {
       ]
     );
 
-    console.log("Database updated for user:", user._id);
+    // console.log("Database updated for user:", user._id);
 
     await sendEmail({
       sendTo: email,
@@ -756,7 +756,7 @@ export async function forgotPasswordController(request, response) {
       }),
     });
 
-    console.log("Email sent to:", email);
+    // console.log("Email sent to:", email);
 
     return response.json({
       message: "Check your email",
@@ -864,7 +864,7 @@ export async function verifyForgotPasswordOtp(request, response) {
 
     // const currentTime = new Date().toISOString();
 
-    // console.log("date", new Date().toISOString(), "current", new Date());
+    // // console.log("date", new Date().toISOString(), "current", new Date());
 
     if (new Date(user.forgot_password_expiry) < new Date().toISOString()) {
       return response.status(400).json({
@@ -881,7 +881,7 @@ export async function verifyForgotPasswordOtp(request, response) {
       });
     }
 
-    console.log("userid", user._id);
+    // console.log("userid", user._id);
 
     const updateUser = await executeQuery(
       `UPDATE users SET
@@ -1080,7 +1080,7 @@ export async function refreshToken(request, response) {
 //   try {
 //     const userId = request.userId;
 
-//     console.log(userId);
+//     // console.log(userId);
 
 //     const user = await UserModel.findById(userId).select(
 //       "-password -refresh_token"

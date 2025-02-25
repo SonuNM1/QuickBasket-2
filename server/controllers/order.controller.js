@@ -7,7 +7,7 @@ export async function CashOnDeliveryOrderController(request, response) {
     const userId = request.userId;
     const { list_items, totalAmt, addressId, subTotalAmt } = request.body;
 
-    // console.log("hello oders", request.body);
+    // // console.log("hello oders", request.body);
 
     const orderQueries = list_items.map((el) => {
       return executeQuery(
@@ -45,7 +45,7 @@ export async function CashOnDeliveryOrderController(request, response) {
 // Get Order Details Controller
 export async function getOrderDetailsController(request, response) {
   try {
-    console.log("getting orders__");
+    // console.log("getting orders__");
     const userId = request.userId;
 
     const orderList = await executeQuery(
@@ -71,7 +71,7 @@ export async function getOrderDetailsController(request, response) {
       [userId]
     );
 
-    // console.log("orderList", orderList);
+    // // console.log("orderList", orderList);
 
     return response.json({
       message: "Order list",
@@ -80,7 +80,7 @@ export async function getOrderDetailsController(request, response) {
       success: true,
     });
   } catch (error) {
-    console.log(error);
+    // console.log(error);
     return response
       .status(500)
       .json({ message: error.message, error: true, success: false });
@@ -93,69 +93,69 @@ export const pricewithDiscount = (price, dis = 1) => {
   return actualPrice;
 };
 
-export async function paymentController(request, response) {
-  try {
-    const userId = request.userId; // Auth middleware
-    const { list_items, totalAmt, addressId, subTotalAmt } = request.body;
+// export async function paymentController(request, response) {
+//   try {
+//     const userId = request.userId; // Auth middleware
+//     const { list_items, totalAmt, addressId, subTotalAmt } = request.body;
 
-    const user = await executeQuery(`SELECT email FROM users WHERE id = ?`, [
-      userId,
-    ]);
+//     const user = await executeQuery(`SELECT email FROM users WHERE id = ?`, [
+//       userId,
+//     ]);
 
-    if (!user.length) {
-      return response.status(404).json({
-        message: "User not found",
-        error: true,
-        success: false,
-      });
-    }
+//     if (!user.length) {
+//       return response.status(404).json({
+//         message: "User not found",
+//         error: true,
+//         success: false,
+//       });
+//     }
 
-    const line_items = list_items.map((item) => ({
-      price_data: {
-        currency: "inr",
-        product_data: {
-          name: item.productId.name,
-          images: item.productId.image,
-          metadata: {
-            productId: item.productId.id, // SQL doesn't use _id like MongoDB
-          },
-        },
-        unit_amount:
-          pricewithDiscount(item.productId.price, item.productId.discount) *
-          100,
-      },
-      adjustable_quantity: {
-        enabled: true,
-        minimum: 1,
-      },
-      quantity: item.quantity,
-    }));
+//     const line_items = list_items.map((item) => ({
+//       price_data: {
+//         currency: "inr",
+//         product_data: {
+//           name: item.productId.name,
+//           images: item.productId.image,
+//           metadata: {
+//             productId: item.productId.id, // SQL doesn't use _id like MongoDB
+//           },
+//         },
+//         unit_amount:
+//           pricewithDiscount(item.productId.price, item.productId.discount) *
+//           100,
+//       },
+//       adjustable_quantity: {
+//         enabled: true,
+//         minimum: 1,
+//       },
+//       quantity: item.quantity,
+//     }));
 
-    const params = {
-      submit_type: "pay",
-      mode: "payment",
-      payment_method_types: ["card"],
-      customer_email: user[0].email,
-      metadata: {
-        userId: userId,
-        addressId: addressId,
-      },
-      line_items: line_items,
-      success_url: `${process.env.FRONTEND_URL}/success`,
-      cancel_url: `${process.env.FRONTEND_URL}/cancel`,
-    };
+//     const params = {
+//       submit_type: "pay",
+//       mode: "payment",
+//       payment_method_types: ["card"],
+//       customer_email: user[0].email,
+//       metadata: {
+//         userId: userId,
+//         addressId: addressId,
+//       },
+//       line_items: line_items,
+//       success_url: `${process.env.FRONTEND_URL}/success`,
+//       cancel_url: `${process.env.FRONTEND_URL}/cancel`,
+//     };
 
-    const session = await Stripe.checkout.sessions.create(params);
+//     const session = await Stripe.checkout.sessions.create(params);
 
-    return response.status(200).json(session);
-  } catch (error) {
-    return response.status(500).json({
-      message: error.message || error,
-      error: true,
-      success: false,
-    });
-  }
-}
+//     return response.status(200).json(session);
+//   } catch (error) {
+//     return response.status(500).json({
+//       message: error.message || error,
+//       error: true,
+//       success: false,
+//     });
+//   }
+// }
 
 import { v4 as uuidv4 } from "uuid";
 
@@ -199,7 +199,7 @@ const getOrderProductItems = async ({
 export async function webhookStripe(request, response) {
   try {
     const event = request.body;
-    // console.log("event", event);
+    // // console.log("event", event);
 
     // Handle the event
     switch (event.type) {
@@ -237,7 +237,7 @@ export async function webhookStripe(request, response) {
           `;
         await executeQuery(insertQuery);
 
-        console.log("Order inserted successfully");
+        // console.log("Order inserted successfully");
 
         // Remove items from the shopping cart
         await executeQuery(
@@ -249,7 +249,7 @@ export async function webhookStripe(request, response) {
 
         break;
       default:
-        console.log(`Unhandled event type ${event.type}`);
+      // console.log(`Unhandled event type ${event.type}`);
     }
 
     // Return a response to acknowledge receipt of the event
@@ -257,5 +257,95 @@ export async function webhookStripe(request, response) {
   } catch (error) {
     console.error("Error handling Stripe webhook:", error);
     response.status(500).json({ error: error.message });
+  }
+}
+
+// const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+export async function paymentController(request, response) {
+  try {
+    const userId = request.userId; // Auth middleware extracts this
+    const { list_items, totalAmt, addressId, subTotalAmt } = request.body;
+
+    // Fetch user details
+    const user = await executeQuery(`SELECT email FROM users WHERE id = ?`, [
+      userId,
+    ]);
+
+    if (!user.length) {
+      return response.status(404).json({
+        message: "User not found",
+        error: true,
+        success: false,
+      });
+    }
+
+    const line_items = list_items.map((item) => ({
+      price_data: {
+        currency: "USD",
+        product_data: {
+          name: item.productId.name,
+          images: item.productId.image,
+          metadata: {
+            productId: item.productId.id, // SQL doesn't use _id like MongoDB
+          },
+        },
+        unit_amount: Math.round(
+          pricewithDiscount(item.productId.price, item.productId.discount) * 100
+        ), // Convert to paise
+      },
+      adjustable_quantity: {
+        enabled: true,
+        minimum: 1,
+      },
+      quantity: item.quantity,
+    }));
+
+    const params = {
+      submit_type: "pay",
+      mode: "payment",
+      payment_method_types: ["amazon_pay"], // Include UPI & Net Banking for India
+      customer_email: user[0].email,
+      metadata: {
+        userId: userId,
+        addressId: addressId,
+      },
+      line_items: line_items,
+      success_url: `${process.env.FRONTEND_URL}/success`,
+      cancel_url: `${process.env.FRONTEND_URL}/cancel`,
+    };
+
+    const session = await Stripe.checkout.sessions.create(params);
+
+    const orderQueries = list_items.map((el) => {
+      return executeQuery(
+        `INSERT INTO orders (user_id, order_id, product_id, product_name, product_image, payment_id, payment_status, delivery_address_id, subtotal_amount, total_amount, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+        [
+          userId,
+          `ORD-${Date.now()}`,
+          el.productId._id,
+          el.productId.name,
+          JSON.stringify(el.productId.image),
+          "",
+          "CASH ON DELIVERY",
+          addressId,
+          subTotalAmt,
+          totalAmt,
+        ]
+      );
+    });
+    await Promise.all(orderQueries);
+
+    // Remove items from cart
+    await executeQuery("DELETE FROM cart_product WHERE user_id = ?", [userId]);
+
+    return response.status(200).json(session);
+  } catch (error) {
+    console.log(error);
+    return response.status(500).json({
+      message: error.message || "Payment processing error",
+      error: true,
+      success: false,
+    });
   }
 }

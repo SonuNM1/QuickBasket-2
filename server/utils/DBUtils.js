@@ -12,7 +12,7 @@ export const executeQuery = async (query, params = []) => {
       }
     }
 
-    console.log(rows);
+    // console.log(rows);
 
     return rows;
   } catch (error) {
