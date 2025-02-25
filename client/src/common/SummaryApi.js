@@ -158,9 +158,25 @@ const SummaryApi = {
     url: "/api/rating/get",
     method: "post",
   },
+  fetchAllRatings: {
+    url: '/api/rating/getAll',
+    method: 'post'
+  },
   addRating: {
     url: "/api/rating/add",
     method: "post",
+  },
+  editRating: {
+    url: "/api/rating/edit",
+    method: "post"
+  },
+  deleteRating: {
+    url: "/api/rating/delete",
+    method: "post"
+  },
+  fetchAverageRating: {
+    url: "/api/rating/average",
+    method: "post"
   },
   addProductToWishlist: {
     url: '/api/wishlist/add',

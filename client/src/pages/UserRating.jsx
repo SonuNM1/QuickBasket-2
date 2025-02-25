@@ -8,6 +8,7 @@ import Typography from "@mui/material/Typography";
 import Axios from "../utils/Axios";
 import SummaryApi from "../common/SummaryApi";
 import toast from "react-hot-toast";
+import { FaAngleLeft, FaAngleRight } from "react-icons/fa"; // Navigation buttons
 
 const labels = {
   0.5: "Useless",
@@ -26,147 +27,246 @@ function getLabelText(value) {
   return `${value} Star${value !== 1 ? "s" : ""}, ${labels[value]}`;
 }
 
-const UserRating = ({ initialValue = 2.5, onChange, product_id }) => {
-  const [value, setValue] = useState(initialValue);
-  const [hover, setHover] = useState(-1);
+const UserRating = ({ product_id }) => {
+  const [value, setValue] = useState(2.5);
+  const [hover, setHover] = useState(-1); // Ensure hover state is working
   const [review, setReview] = useState("");
+  const [allReviews, setAllReviews] = useState([]);
+  const [editMode, setEditMode] = useState(null);
+  const [editText, setEditText] = useState("");
+  const [currentIndex, setCurrentIndex] = useState(0); // Track the visible review
 
   useEffect(() => {
     if (product_id) {
-      fetchReviews(product_id);
+      fetchAllReviews();
     }
-  }, [product_id]); // Runs when product_id changes
+  }, [product_id]);
 
-  const fetchReviews = async (product_id) => {
+  // Fetch all ratings & reviews
+  const fetchAllReviews = async () => {
     try {
       const res = await Axios({
-        ...SummaryApi.fetchRating,
-        method: "POST", // Ensure the correct method
-        data: { product_id }, // Send product_id in request body
+        ...SummaryApi.fetchAllRatings,
+        data: { product_id },
       });
 
-      console.log("res", res);
-
-      setReview(res.data.data?.review);
-      setValue(res.data.data?.rating);
+      setAllReviews(res.data.data);
     } catch (error) {
-      console.log("Fetch reviews error:", error);
       toast.error("Error fetching reviews");
     }
   };
 
+  // Submit a new review
   const handleSubmit = async () => {
-    console.log("Rating: ", value);
-    console.log("Review: ", review);
-
-    if (review == "" || review == undefined || review == null) {
-      toast.alert("review cannot be blank!!");
+    if (!review.trim()) {
+      toast.error("Review cannot be empty!");
       return;
     }
-
-    if (!review.trim()) return;
 
     try {
       await Axios({
         ...SummaryApi.addRating,
-        data: {
-          product_id: product_id, // set this correctly
-          rating: value,
-          review: review,
-        },
+        data: { product_id, rating: value, review },
       });
 
-      setReview("");
       toast.success("Review submitted successfully!");
-      fetchReviews(product_id); //
+      setReview("");
+      fetchAllReviews();
     } catch (error) {
-      console.log("Error submitting review: ", error || error.message);
-      toast.error("Error submitting review.");
+      toast.error("Error submitting review!");
     }
   };
 
-  const handleRatingChange = (event, newValue) => {
-    setValue(newValue);
-    if (onChange) {
-      onChange(newValue);
+  // Edit review
+  const editReview = async (reviewId) => {
+    try {
+      await Axios({
+        ...SummaryApi.editRating,
+        data: { review_id: reviewId, review: editText },
+      });
+
+      toast.success("Review updated successfully!");
+      setEditMode(null);
+      fetchAllReviews();
+    } catch (error) {
+      toast.error("Error updating review!");
+    }
+  };
+
+  // Delete review
+  const deleteReview = async (reviewId) => {
+    try {
+      await Axios({
+        ...SummaryApi.deleteRating,
+        data: { review_id: reviewId },
+      });
+
+      toast.success("Review deleted successfully!");
+      fetchAllReviews();
+    } catch (error) {
+      toast.error("Error deleting review.");
+    }
+  };
+
+  // Navigation for reviews
+  const handleNext = () => {
+    if (currentIndex < allReviews.length - 1) {
+      setCurrentIndex(currentIndex + 1);
+    }
+  };
+
+  const handlePrev = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex(currentIndex - 1);
     }
   };
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        padding: 3,
-        borderRadius: 2,
-        boxShadow: 3,
-        backgroundColor: "#fff",
-        width: "100%",
-        maxWidth: 500,
-        margin: "auto",
-      }}
-    >
-      {/* Rating Title */}
-      <Typography variant="h6" sx={{ marginBottom: 2, fontWeight: "bold" }}>
-        Rate Your Experience
-      </Typography>
+    <>
+      <Box
+        sx={{ width: "100%", maxWidth: 500, margin: "auto", paddingBottom: 3 }}
+      >
+        <Typography variant="h6" sx={{ marginBottom: 2, fontWeight: "bold" }}>
+          Rate Your Experience
+        </Typography>
 
-      {/* Rating Component */}
-      <Box sx={{ display: "flex", alignItems: "center", marginBottom: 2 }}>
-        <Rating
-          name="hover-feedback"
-          value={value}
-          precision={0.5}
-          getLabelText={getLabelText}
-          onChange={handleRatingChange}
-          onChangeActive={(event, newHover) => setHover(newHover)}
-          emptyIcon={<StarIcon style={{ opacity: 0.55 }} fontSize="inherit" />}
-          size="large"
+        {/* Rating Input */}
+        <Box sx={{ display: "flex", alignItems: "center", marginBottom: 2 }}>
+          <Rating
+            name="hover-feedback"
+            value={value}
+            precision={0.5}
+            getLabelText={getLabelText}
+            onChange={(event, newValue) => setValue(newValue)}
+            onChangeActive={(event, newHover) => setHover(newHover)} // Fix hover state update
+            emptyIcon={
+              <StarIcon style={{ opacity: 0.55 }} fontSize="inherit" />
+            }
+            size="large"
+          />
+          {value !== null && (
+            <Box
+              sx={{
+                ml: 2,
+                fontWeight: "bold",
+                minWidth: "75px",
+                textAlign: "center",
+              }}
+            >
+              {hover !== -1 ? labels[hover] || labels[value] : labels[value]}{" "}
+              {/* ✅ Fix label display */}
+            </Box>
+          )}
+        </Box>
+
+        {/* Review Input */}
+        <TextField
+          label="Write a Review"
+          variant="outlined"
+          multiline
+          rows={3}
+          fullWidth
+          sx={{ marginBottom: 2 }}
+          value={review}
+          onChange={(e) => setReview(e.target.value)}
         />
-        {value != null && (
-          <Box
-            sx={{
-              ml: 2,
-              fontWeight: "bold",
-              minWidth: "75px",
-              textAlign: "center",
-            }}
-          >
-            {hover !== -1 ? labels[hover] || labels[value] : labels[value]}
-          </Box>
-        )}
+
+        {/* Submit Button */}
+
+        <Button
+          variant="contained"
+          onClick={handleSubmit}
+          sx={{
+            width: "100%",
+            backgroundColor: "#43A047", // Green color
+            "&:hover": {
+              backgroundColor: "#2E7D32", // Darker green on hover
+            },
+          }}
+        >
+          Submit Review
+        </Button>
       </Box>
 
-      {/* Review Input */}
-      <TextField
-        id="outlined-basic"
-        label="Write a Review"
-        variant="outlined"
-        multiline
-        rows={3}
-        fullWidth
-        sx={{ marginBottom: 2 }}
-        value={review}
-        onChange={(e) => setReview(e.target.value)}
-      />
+      {/* Reviews Section */}
+      <Box className="relative w-full max-w-xl mx-auto mt-6">
+        <Typography
+          variant="h6"
+          sx={{ fontWeight: "bold", textAlign: "center", marginBottom: 2 }}
+        >
+          Customer Reviews
+        </Typography>
 
-      {/* Submit Button */}
-      <Button
-        variant="contained"
-        color="primary"
-        onClick={handleSubmit}
-        sx={{
-          width: "100%",
-          padding: "10px 0",
-          fontSize: "1rem",
-          fontWeight: "bold",
-          textTransform: "none",
-        }}
-      >
-        Submit Review
-      </Button>
-    </Box>
+        {/* Navigation buttons & Reviews */}
+        <div className="relative flex items-center">
+          {/* Left Button */}
+          <button
+            className={`absolute left-0 z-10 p-2 bg-gray-200 rounded-full shadow transition hover:bg-gray-300 ${
+              currentIndex === 0 ? "opacity-50 cursor-not-allowed" : ""
+            }`}
+            onClick={handlePrev}
+            disabled={currentIndex === 0}
+          >
+            <FaAngleLeft size={24} />
+          </button>
+
+          {/* Reviews Carousel */}
+          <div className="overflow-hidden w-full px-10">
+            <div
+              className="flex transition-transform duration-300"
+              style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+            >
+              {allReviews.map((review, index) => (
+                <div
+                  key={index}
+                  className="min-w-full p-4 border rounded shadow-md"
+                >
+                  <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
+                    {review.username}
+                  </Typography>
+                  <Rating
+                    value={review.rating}
+                    precision={0.5}
+                    readOnly
+                    size="small"
+                  />
+                  <Typography sx={{ color: "gray" }}>
+                    {review.review}
+                  </Typography>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Right Button */}
+          <button
+            className={`absolute right-0 z-10 p-2 bg-gray-200 rounded-full shadow transition hover:bg-gray-300 ${
+              currentIndex === allReviews.length - 1
+                ? "opacity-50 cursor-not-allowed"
+                : ""
+            }`}
+            onClick={handleNext}
+            disabled={currentIndex === allReviews.length - 1}
+          >
+            <FaAngleRight size={24} />
+          </button>
+        </div>
+
+        {/* Pagination Indicator */}
+        <Typography
+          sx={{
+            textAlign: "center",
+            marginTop: 2,
+            fontWeight: "bold",
+            color: "gray",
+          }}
+        >
+          {allReviews.length > 0
+            ? `${currentIndex + 1} / ${allReviews.length} reviews`
+            : "No reviews yet"}
+        </Typography>
+      </Box>
+    </>
   );
 };
 

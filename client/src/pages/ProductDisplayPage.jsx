@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
-import { FaHeart } from "react-icons/fa6";
+import { FaHeart, FaStar } from "react-icons/fa6";
 import SummaryApi from "../common/SummaryApi";
 import Axios from "../utils/Axios";
 import AxiosToastError from "../utils/AxiosToastError";
@@ -15,7 +15,6 @@ import UserRating from "./UserRating";
 import toast from "react-hot-toast";
 
 const ProductDisplayPage = () => {
-
   const params = useParams();
   let productId = params?.product?.split("-")?.slice(-1)[0];
 
@@ -26,9 +25,10 @@ const ProductDisplayPage = () => {
 
   const [image, setImage] = useState(0);
   const [loading, setLoading] = useState(false);
-  const imageContainer = useRef();
-
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const [averageRating, setAverageRating] = useState(0);
+
+  const imageContainer = useRef();
 
   const fetchProductDetails = async () => {
     try {
@@ -51,29 +51,33 @@ const ProductDisplayPage = () => {
     }
   };
 
-  // Check if the product is already in the wishlist 
+  // Check if the product is already in the wishlist
 
   const checkIfWishlisted = async () => {
     try {
-      const response = await Axios(
-        SummaryApi.fetchUserWishlist
-      )
+      const response = await Axios(SummaryApi.fetchUserWishlist);
 
-      const wishlistItems = response.data.data || [] ; 
+      const wishlistItems = response.data.data || [];
 
-      // check if the product is in the wishlist 
+      // check if the product is in the wishlist
 
-      const alreadyWishlisted = wishlistItems.some((item) => item.id === parseInt(productId))
+      const alreadyWishlisted = wishlistItems.some(
+        (item) => item.id === parseInt(productId)
+      );
 
-      setIsWishlisted(alreadyWishlisted) ; 
+      setIsWishlisted(alreadyWishlisted);
     } catch (error) {
-      console.log('Check if wishlisted productDisplayPage error: ', error || error.message) ; 
+      console.log(
+        "Check if wishlisted productDisplayPage error: ",
+        error || error.message
+      );
     }
-  }
+  };
 
   useEffect(() => {
     fetchProductDetails();
-    checkIfWishlisted() ; 
+    checkIfWishlisted();
+    fetchAverageRating();
   }, [params]);
 
   const handleScrollRight = () => {
@@ -111,11 +115,10 @@ const ProductDisplayPage = () => {
   // };
 
   const toggleWishlist = async (e) => {
-
     e.preventDefault();
     e.stopPropagation();
 
-    const payload = { product_id: data.id || data._id}; // ✅ Prepare data
+    const payload = { product_id: data.id || data._id }; // ✅ Prepare data
 
     console.log("Sending Wishlist Request:", payload); // ✅ Debugging log
 
@@ -126,22 +129,20 @@ const ProductDisplayPage = () => {
           ...SummaryApi.removeProductFromWishlist,
           data: payload,
         });
-        setIsWishlisted(false) ; 
+        setIsWishlisted(false);
         toast.success("Removed from wishlist");
       } else {
         response = await Axios({
           ...SummaryApi.addProductToWishlist,
           data: payload,
         });
-        
-        if(response.data.success){
-          setIsWishlisted(true) ; 
-          toast.success("Added to wishlist");
-        }
-        else{
-          toast.error('Product already exists in your wishlist')
-        }
 
+        if (response.data.success) {
+          setIsWishlisted(true);
+          toast.success("Added to wishlist");
+        } else {
+          toast.error("Product already exists in your wishlist");
+        }
       }
       console.log("Wishlist API Response:", response); // ✅ Debugging log
       // setIsWishlisted(!isWishlisted);
@@ -151,15 +152,58 @@ const ProductDisplayPage = () => {
     }
   };
 
+  const fetchAverageRating = async () => {
+    console.log("Fetch average rating for product id: ", productId);
+
+    try {
+      const response = await Axios({
+        ...SummaryApi.fetchAverageRating,
+        data: { product_id: productId },
+      });
+
+      console.log("API Response for Average Rating:", response.data);
+
+      if (response.data.success) {
+        // since receiving the averageRating as string from backend, we need to convert it into integer
+
+        const avgRating = parseFloat(response.data.data.average_rating);
+
+        setAverageRating(avgRating > 0 ? avgRating.toFixed(1) : null);
+      }
+    } catch (error) {
+      console.log("Error fetching average rating: ", error || error.message);
+    }
+  };
+
   console.log("product data", data);
 
   return (
     <section className="container mx-auto p-4 grid lg:grid-cols-2 ">
-
       {/* product image and review  */}
 
       <div className="">
-        <div className="bg-white lg:min-h-[65vh] lg:max-h-[65vh] rounded min-h-56 max-h-56 h-full w-full">
+        <div className="relative bg-white lg:min-h-[65vh] lg:max-h-[65vh] rounded min-h-56 max-h-56 h-full w-full">
+          {/* Rating Badge */}
+
+          {/* {averageRating > 0 ? (
+            <div className="absolute top-2 left-2 bg-black text-white text-sm font-semibold px-2 py-1 rounded-md flex items-center gap-1">
+              {averageRating.toFixed(1)}{" "}
+              <FaStar size={12} className="text-yellow-400" />
+            </div>
+          ) : (
+            <div className="absolute top-2 left-2 bg-gray-600 text-white text-xs font-semibold px-2 py-1 rounded-md">
+              No Rating
+            </div>
+          )} */}
+
+          {averageRating && averageRating > 0 ? (
+            <div className="absolute top-2 left-2 bg-black text-white text-xs font-semibold px-2 py-1 rounded-md flex items-center gap-1">
+              {averageRating} <FaStar size={12} className="text-yellow-400" />
+            </div>
+          ) : null}
+
+          {/* Product Image */}
+
           <img
             src={data.image[image]}
             className="w-full h-full object-scale-down"
@@ -198,14 +242,7 @@ const ProductDisplayPage = () => {
               );
             })}
           </div>
-          <div className="w-full -ml-3 h-full hidden lg:flex justify-between absolute  items-center">
-            {/* <button onClick={handleScrollLeft} className='z-10 bg-white relative p-1 rounded-full shadow-lg'>
-                        <FaAngleLeft/>
-                    </button>
-                    <button onClick={handleScrollRight} className='z-10 bg-white relative p-1 rounded-full shadow-lg'>
-                        <FaAngleRight/>
-                    </button> */}
-          </div>
+          <div className="w-full -ml-3 h-full hidden lg:flex justify-between absolute  items-center"></div>
 
           <div className="mt-20">
             <UserRating
@@ -218,38 +255,22 @@ const ProductDisplayPage = () => {
           </div>
         </div>
         <div></div>
-
-        {/* <div className='my-4  hidden lg:grid gap-3 '>
-                <div>
-                    <p className='font-semibold'>Description</p>
-                    <p className='text-base'>{data.description}</p>
-                </div>
-                <div>
-                    <p className='font-semibold'>Unit</p>
-                    <p className='text-base'>{data.unit}</p>
-                </div>
-                {
-                  data?.more_details && Object.keys(data?.more_details).map((element,index)=>{
-                    return(
-                      <div>
-                          <p className='font-semibold'>{element}</p>
-                          <p className='text-base'>{data?.more_details[element]}</p>
-                      </div>
-                    )
-                  })
-                }
-            </div> */}
       </div>
 
       {/* product desc, price, add to cart */}
 
       <div className="p-4 lg:pl-7 text-base lg:text-lg">
+        
         {/* <p className='bg-green-300 w-fit px-2 rounded-full'>10 Min</p> */}
-        <h2 className="text-lg font-semibold lg:text-3xl">{data.name}</h2>
-        <p className="">{data.unit}</p>
+        
+        <h2 className="text-lg font-semibold lg:text-3xl mb-4">{data.name}</h2>
+        
+        {/* <p className="">{data.unit}</p> */}
+
         <Divider />
+        
         <div>
-          <p className="">Price</p>
+          <p className="mt-3">Price</p>
           <div className="flex items-center gap-2 lg:gap-4">
             <div className="border border-green-600 px-4 py-2 rounded bg-green-50 w-fit">
               <p className="font-semibold text-lg lg:text-xl">
@@ -290,17 +311,21 @@ const ProductDisplayPage = () => {
         : "bg-white border border-red-500 text-red-500 hover:bg-red-700 hover:text-white"
     }`}
             >
-              <FaHeart 
-              size={20} 
-              className={`transition duration-300 ${isWishlisted ? "text-white" : "text-red-500 hover:text-white"}`} 
-            /> 
+              <FaHeart
+                size={20}
+                className={`transition duration-300 ${
+                  isWishlisted ? "text-white" : "text-red-500 hover:text-white"
+                }`}
+              />
 
-              <span className="font-medium">{isWishlisted ? "Wishlisted" : "Wishlist"}</span>
+              <span className="font-medium">
+                {isWishlisted ? "Wishlisted" : "Wishlist"}
+              </span>
             </button>
           </div>
         )}
 
-        <h2 className="font-semibold">Why shop from localBazaa₹? </h2>
+        <h2 className="font-semibold mt-14">Why shop from localBazaa₹? </h2>
         <div>
           <div className="flex  items-center gap-4 my-4">
             <img src={image1} alt="superfast delivery" className="w-20 h-20" />
@@ -325,24 +350,18 @@ const ProductDisplayPage = () => {
         </div>
 
         {/****only mobile */}
+
         <div className="my-4 grid gap-3 ">
           <div>
-            <p className="font-semibold">Description</p>
-            <p className="text-base">{data.description}</p>
+            <p className="font-semibold mt-4">Description</p>
+            <p className="text-sm mt-3">{data.description}</p>
           </div>
-          <div>
+
+          {/* <div>
             <p className="font-semibold">Unit</p>
             <p className="text-base">{data.unit}</p>
-          </div>
-          {data?.more_details &&
-            Object.keys(data?.more_details).map((element, index) => {
-              return (
-                <div>
-                  <p className="font-semibold">{element}</p>
-                  <p className="text-base">{data?.more_details[element]}</p>
-                </div>
-              );
-            })}
+          </div> */}
+          
         </div>
       </div>
     </section>
