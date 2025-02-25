@@ -77,10 +77,6 @@ const ProductDisplayPage = () => {
   useEffect(() => {
     fetchProductDetails();
     checkIfWishlisted();
-<<<<<<< HEAD
-    fetchAverageRating();
-=======
->>>>>>> main
   }, [params]);
 
   const handleScrollRight = () => {
@@ -237,15 +233,14 @@ const ProductDisplayPage = () => {
       {/* product desc, price, add to cart */}
 
       <div className="p-4 lg:pl-7 text-base lg:text-lg">
-        
         {/* <p className='bg-green-300 w-fit px-2 rounded-full'>10 Min</p> */}
-        
+
         <h2 className="text-lg font-semibold lg:text-3xl mb-4">{data.name}</h2>
-        
+
         {/* <p className="">{data.unit}</p> */}
 
         <Divider />
-        
+
         <div>
           <p className="mt-3">Price</p>
           <div className="flex items-center gap-2 lg:gap-4">
@@ -338,7 +333,6 @@ const ProductDisplayPage = () => {
             <p className="font-semibold">Unit</p>
             <p className="text-base">{data.unit}</p>
           </div> */}
-          
         </div>
       </div>
     </section>
