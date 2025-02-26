@@ -70,19 +70,73 @@ export const addToCartItemController = async (request, response) => {
 /**
  * Get Cart Items
  */
+// export const getCartItemController = async (request, response) => {
+//   try {
+//     const userId = request.userId;
+
+//     // console.log("Getting cart items for user:", userId);
+
+//     // Fetch cart items with product details
+//     const cartItems = await executeQuery(
+//       `SELECT cp.id AS cart_item_id, cp.quantity,
+//                 p.id AS product_id, p.name, p.price, p.discount,p.description, p.image
+//          FROM cart_product cp
+//          JOIN products p ON cp.product_id = p.id
+//          WHERE cp.user_id = ?`,
+//       [userId]
+//     );
+
+//     // Transform the data to nest product details under "productId"
+//     const formattedCartItems = cartItems.map((item) => ({
+//       _id: item.cart_item_id,
+//       quantity: item.quantity,
+//       productId: {
+//         _id: item.product_id,
+//         name: item.name,
+//         price: item.price,
+//         description: item.description,
+//         image: item.image,
+//         discount: item.discount,
+//       },
+//     }));
+
+//     // console.log("Formatted cart items:", formattedCartItems);
+
+//     return response.json({
+//       data: formattedCartItems,
+//       error: false,
+//       success: true,
+//     });
+//   } catch (error) {
+//     console.error("Error fetching cart items:", error);
+//     return response.status(500).json({
+//       message: error.message || error,
+//       error: true,
+//       success: false,
+//     });
+//   }
+// };
+
 export const getCartItemController = async (request, response) => {
   try {
     const userId = request.userId;
 
-    // console.log("Getting cart items for user:", userId);
-
-    // Fetch cart items with product details
+    // Fetch cart items with product and variation details
     const cartItems = await executeQuery(
-      `SELECT cp.id AS cart_item_id, cp.quantity, 
-                p.id AS product_id, p.name, p.price, p.discount,p.description, p.image
-         FROM cart_product cp
-         JOIN products p ON cp.product_id = p.id
-         WHERE cp.user_id = ?`,
+      `SELECT 
+          cp.id AS cart_item_id, 
+          cp.quantity, 
+          cp.variation_id, 
+          p.id AS product_id, 
+          p.name, 
+          p.description, 
+          p.image,
+          COALESCE(pv.price, p.price) AS price, 
+          p.discount AS discount
+       FROM cart_product cp
+       JOIN products p ON cp.product_id = p.id
+       LEFT JOIN product_variations pv ON cp.variation_id = pv.id
+       WHERE cp.user_id = ?`,
       [userId]
     );
 
@@ -99,8 +153,6 @@ export const getCartItemController = async (request, response) => {
         discount: item.discount,
       },
     }));
-
-    // console.log("Formatted cart items:", formattedCartItems);
 
     return response.json({
       data: formattedCartItems,
