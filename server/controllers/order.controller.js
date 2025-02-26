@@ -45,7 +45,7 @@ export async function CashOnDeliveryOrderController(request, response) {
 // Get Order Details Controller
 export async function getOrderDetailsController(request, response) {
   try {
-    console.log("getting orders__");
+    // console.log("getting orders__");
     const userId = request.userId;
 
     const orderList = await executeQuery(

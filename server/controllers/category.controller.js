@@ -104,7 +104,7 @@ export const AddCategoryController = async (req, res) => {
 
 export const getCategoryController = async (req, res) => {
   try {
-    console.log("gettting categories");
+    // console.log("gettting categories");
     const query = "SELECT * FROM categories ORDER BY created_at DESC";
     const data = await executeQuery(query);
 

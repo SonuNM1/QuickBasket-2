@@ -342,7 +342,7 @@ export const deleteRating = async (req, res) => {
 
 export const getAverageRating = async (req, res) => {
 
-  console.log("Request Body:", req.body); 
+  // console.log("Request Body:", req.body); 
 
   try {
     const {product_id} = req.body ; 

@@ -29,7 +29,7 @@ export const createProductController = async (request, response) => {
     }
 
     // Ensure category and subCategory are valid JSON arrays and contain valid IDs
-    
+
     const validCategories = Array.isArray(category)
       ? category
           .filter(
@@ -166,7 +166,6 @@ export const getProductByCategory = async (request, response) => {
 
 export const getProductDetails = async (request, response) => {
   try {
-
     const { productId } = request.body;
 
     if (!productId) {
@@ -177,25 +176,54 @@ export const getProductDetails = async (request, response) => {
       });
     }
 
+    // const query = `
+    //   SELECT
+    //     p.*,
+    //     (
+    //       SELECT JSON_ARRAYAGG(
+    //         JSON_OBJECT('_id', c.id, 'name', c.name)
+    //       )
+    //       FROM categories c
+    //       WHERE JSON_CONTAINS(p.category, JSON_QUOTE(CAST(c.id AS CHAR)), '$')
+    //     ) AS category_details,
+    //     (
+    //       SELECT JSON_ARRAYAGG(
+    //         JSON_OBJECT('_id', sc.id, 'name', sc.name)
+    //       )
+    //       FROM sub_categories sc
+    //       WHERE JSON_CONTAINS(p.subCategory, JSON_QUOTE(CAST(sc.id AS CHAR)), '$')
+    //     ) AS subCategory_details
+    //   FROM products p
+    //   WHERE p.id = ?
+    // `;
+
     const query = `
       SELECT 
-        p.*, 
-        (
-          SELECT JSON_ARRAYAGG(
-            JSON_OBJECT('_id', c.id, 'name', c.name)
-          ) 
-          FROM categories c 
-          WHERE JSON_CONTAINS(p.category, JSON_QUOTE(CAST(c.id AS CHAR)), '$')
-        ) AS category_details,
-        (
-          SELECT JSON_ARRAYAGG(
-            JSON_OBJECT('_id', sc.id, 'name', sc.name)
-          ) 
-          FROM sub_categories sc 
-          WHERE JSON_CONTAINS(p.subCategory, JSON_QUOTE(CAST(sc.id AS CHAR)), '$')
-        ) AS subCategory_details
-      FROM products p
-      WHERE p.id = ?
+  p.*, 
+  (
+    SELECT JSON_ARRAYAGG(
+      JSON_OBJECT('_id', c.id, 'name', c.name)
+    ) 
+    FROM categories c 
+    WHERE JSON_CONTAINS(p.category, JSON_QUOTE(CAST(c.id AS CHAR)), '$')
+  ) AS category_details,
+  (
+    SELECT JSON_ARRAYAGG(
+      JSON_OBJECT('_id', sc.id, 'name', sc.name)
+    ) 
+    FROM sub_categories sc 
+    WHERE JSON_CONTAINS(p.subCategory, JSON_QUOTE(CAST(sc.id AS CHAR)), '$')
+  ) AS subCategory_details,
+  (
+    SELECT JSON_ARRAYAGG(
+      JSON_OBJECT('id', v.id, 'attribute', v.attribute, 'price', v.price)
+    )
+    FROM product_variations v
+    WHERE v.product_id = p.id
+  ) AS variations
+FROM products p
+WHERE p.id = ?
+
     `;
 
     const product = await executeQuery(query, [productId]);

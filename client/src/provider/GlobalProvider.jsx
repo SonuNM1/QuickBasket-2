@@ -14,6 +14,7 @@ export const GlobalContext = createContext(null);
 export const useGlobalContext = () => useContext(GlobalContext);
 
 const GlobalProvider = ({ children }) => {
+  
   const dispatch = useDispatch();
   const [totalPrice, setTotalPrice] = useState(0);
   const [notDiscountTotalPrice, setNotDiscountTotalPrice] = useState(0);

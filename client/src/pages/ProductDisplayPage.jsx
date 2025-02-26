@@ -28,6 +28,9 @@ const ProductDisplayPage = () => {
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [averageRating, setAverageRating] = useState(0);
 
+  const [variations, setVariations] = useState([]);
+  const [selectedVariation, setSelectedVariation] = useState(null);
+
   const imageContainer = useRef();
 
   const fetchProductDetails = async () => {
@@ -43,6 +46,7 @@ const ProductDisplayPage = () => {
 
       if (responseData.success) {
         setData(responseData.data);
+        setVariations(responseData.data.variations || []); // store variations
       }
     } catch (error) {
       AxiosToastError(error);
@@ -87,32 +91,6 @@ const ProductDisplayPage = () => {
   const handleScrollLeft = () => {
     imageContainer.current.scrollLeft -= 100;
   };
-
-  // const toggleWishlist = async (e) => {
-
-  //   e.preventDefault();
-  //   e.stopPropagation();
-
-  //   try {
-  //     if (isWishlisted) {
-  //       await Axios({
-  //         ...SummaryApi.removeProductFromWishlist,
-  //         data: { product_id: productId },
-  //       });
-  //       toast.success("Removed from wishlist");
-  //     } else {
-  //       await Axios({
-  //         ...SummaryApi.addProductToWishlist,
-  //         data: { product_id: productId },
-  //       });
-  //       toast.success("Added to wishlist");
-  //     }
-  //     setIsWishlisted(!isWishlisted);
-  //   } catch (error) {
-  //     console.error("Wishlist error:", error);
-  //     toast.error("Error updating wishlist");
-  //   }
-  // };
 
   const toggleWishlist = async (e) => {
     e.preventDefault();
@@ -175,27 +153,26 @@ const ProductDisplayPage = () => {
     }
   };
 
+  const handleSelectVariation = (variation) => {
+    console.log('Variation selected: ', variation) ; 
+    setSelectedVariation(variation) ; 
+  }
+
   console.log("product data", data);
 
+  console.log("Selected Variation:", selectedVariation);
+
+  useEffect(() => {
+    console.log("🔄 Updated selectedVariation:", selectedVariation);
+}, [selectedVariation]);
+
   return (
-    <section className="container mx-auto p-4 grid lg:grid-cols-2 ">
+    <section className="container mx-auto p-4 grid lg:grid-cols-2">
+
       {/* product image and review  */}
 
       <div className="">
         <div className="relative bg-white lg:min-h-[65vh] lg:max-h-[65vh] rounded min-h-56 max-h-56 h-full w-full">
-          {/* Rating Badge */}
-
-          {/* {averageRating > 0 ? (
-            <div className="absolute top-2 left-2 bg-black text-white text-sm font-semibold px-2 py-1 rounded-md flex items-center gap-1">
-              {averageRating.toFixed(1)}{" "}
-              <FaStar size={12} className="text-yellow-400" />
-            </div>
-          ) : (
-            <div className="absolute top-2 left-2 bg-gray-600 text-white text-xs font-semibold px-2 py-1 rounded-md">
-              No Rating
-            </div>
-          )} */}
-
           {averageRating && averageRating > 0 ? (
             <div className="absolute top-2 left-2 bg-black text-white text-xs font-semibold px-2 py-1 rounded-md flex items-center gap-1">
               {averageRating} <FaStar size={12} className="text-yellow-400" />
@@ -260,29 +237,43 @@ const ProductDisplayPage = () => {
       {/* product desc, price, add to cart */}
 
       <div className="p-4 lg:pl-7 text-base lg:text-lg">
-        
         {/* <p className='bg-green-300 w-fit px-2 rounded-full'>10 Min</p> */}
-        
+
         <h2 className="text-lg font-semibold lg:text-3xl mb-4">{data.name}</h2>
-        
+
         {/* <p className="">{data.unit}</p> */}
 
         <Divider />
-        
+
+        {/* Price Section */}
+
         <div>
           <p className="mt-3">Price</p>
           <div className="flex items-center gap-2 lg:gap-4">
             <div className="border border-green-600 px-4 py-2 rounded bg-green-50 w-fit">
               <p className="font-semibold text-lg lg:text-xl">
                 {DisplayPriceInRupees(
-                  pricewithDiscount(data.price, data.discount)
+                  pricewithDiscount(
+                    selectedVariation ? selectedVariation.price : data.price,
+                    data.discount
+                  )
                 )}
               </p>
             </div>
-            {data.discount && (
-              <p className="line-through">{DisplayPriceInRupees(data.price)}</p>
+
+            {/* Show Original Price in Strikethrough if a discount exists */}
+
+            {data.discount > 0 && (
+              <p className="line-through">
+                {DisplayPriceInRupees(
+                  selectedVariation ? selectedVariation.price : data.price
+                )}
+              </p>
             )}
-            {data.discount && (
+
+            {/* Show Discount % */}
+
+            {data.discount > 0 && (
               <p className="font-bold text-green-600 lg:text-2xl">
                 {Math.round(data.discount)}%{" "}
                 <span className="text-base text-neutral-500">Discount</span>
@@ -294,34 +285,61 @@ const ProductDisplayPage = () => {
         {data.stock === 0 ? (
           <p className="text-lg text-red-500 my-2">Out of Stock</p>
         ) : (
-          // <button className='my-4 px-4 py-1 bg-green-600 hover:bg-green-700 text-white rounded'>Add</button>
-
-          <div className="my-4 flex gap-1 items-center">
-            <AddToCartButton data={data} />
-
-            {/* wishlist button */}
-
-            <button
-              onClick={toggleWishlist}
-              className={`
-    flex items-center gap-2 px-6 py-2 rounded-md transition duration-300 h-9 text-sm 
-    ${
-      isWishlisted
-        ? "bg-red-700 text-white border-red-700"
-        : "bg-white border border-red-500 text-red-500 hover:bg-red-700 hover:text-white"
-    }`}
-            >
-              <FaHeart
-                size={20}
-                className={`transition duration-300 ${
-                  isWishlisted ? "text-white" : "text-red-500 hover:text-white"
-                }`}
+          <div className="my-4">
+            <div className="flex gap-1 items-center">
+              <AddToCartButton
+                data={data}
+                selectedVariation={selectedVariation}
               />
 
-              <span className="font-medium">
-                {isWishlisted ? "Wishlisted" : "Wishlist"}
-              </span>
-            </button>
+              {/* Wishlist button */}
+
+              <button
+                onClick={toggleWishlist}
+                className={`flex items-center gap-2 px-6 py-2 rounded-md transition duration-300 h-9 text-sm
+                  ${
+                    isWishlisted
+                      ? "bg-red-700 text-white border-red-700"
+                      : "bg-white border border-red-500 text-red-500 hover:bg-red-700 hover:text-white"
+                  }
+                `}
+              >
+                <FaHeart
+                  size={20}
+                  className={`transition duration-300 ${
+                    isWishlisted
+                      ? "text-white"
+                      : "text-red-500 hover:text-white "
+                  }`}
+                />
+                <span className="font-medium">
+                  {isWishlisted ? "Wishlisted" : "Wishist"}
+                </span>
+              </button>
+            </div>
+
+            {/* Variations  */}
+
+            {data.variations && data.variations.length > 0 && (
+              <div className="mt-7">
+                <p className="font-semibold mb-4">Choose Variation: </p>
+                <div className="flex gap-2 flex-wrap">
+                  {data.variations.map((variation, index) => (
+                    <button
+                      key={variation.id}
+                      onClick={() => handleSelectVariation(variation)}
+                      className={`px-4 py-2 border rounded-md text-sm transition ${
+                        selectedVariation?.id === variation.id
+                          ? "bg-green-600 text-white border-green-600"
+                          : "bg-gray-200 text-black hover:bg-green-500 hover:text-white"
+                      }`}
+                    >
+                      {variation.attribute} - {" "} {DisplayPriceInRupees(variation.price)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -361,7 +379,6 @@ const ProductDisplayPage = () => {
             <p className="font-semibold">Unit</p>
             <p className="text-base">{data.unit}</p>
           </div> */}
-          
         </div>
       </div>
     </section>

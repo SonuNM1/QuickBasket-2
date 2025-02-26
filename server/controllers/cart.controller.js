@@ -6,11 +6,16 @@ import { executeQuery } from "../utils/DBUtils.js";
 export const addToCartItemController = async (request, response) => {
   try {
     const userId = request.userId;
-    const { productId } = request.body;
+    const { productId, variationId, price } = request.body; // accept variation and price 
 
-    console.log("hello add to card");
+    console.log("🟡 Received Add to Cart request:");
+    console.log("User ID:", userId);
+    console.log("Product ID:", productId);
+    console.log("Variation ID:", variationId);
+    console.log("Price:", price);
 
     if (!productId) {
+      console.error("❌ Missing Product ID");
       return response.status(402).json({
         message: "Provide productId",
         error: true,
@@ -19,10 +24,15 @@ export const addToCartItemController = async (request, response) => {
     }
 
     // Check if item is already in the cart
+
     const checkItemCart = await executeQuery(
-      "SELECT * FROM cart_product WHERE user_id = ? AND product_id = ?",
-      [userId, productId]
+      "SELECT * FROM cart_product WHERE user_id = ? AND product_id = ? AND (variation_id IS NULL OR variation_id = ?)",
+      [userId, productId, variationId]
     );
+
+    console.log("🔍 Cart Check Result:", checkItemCart);
+
+    
 
     if (checkItemCart.length > 0) {
       return response.status(400).json({
@@ -30,11 +40,14 @@ export const addToCartItemController = async (request, response) => {
       });
     }
 
-    // Add item to cart
-    const save = await executeQuery(
-      "INSERT INTO cart_product (user_id, product_id, quantity) VALUES (?, ?, ?)",
-      [userId, productId, 1]
-    );
+    // Use variationId only if it's provided
+
+  const save = await executeQuery(
+  "INSERT INTO cart_product (user_id, product_id, variation_id, quantity) VALUES (?, ?, ?, ?)",
+  [userId, productId, variationId || null, 1]  // ✅ Allow `variationId` to be NULL
+  );
+
+  console.log("🟢 Insert Success:", save);
 
     return response.json({
       data: save,
@@ -43,11 +56,15 @@ export const addToCartItemController = async (request, response) => {
       success: true,
     });
   } catch (error) {
+
+    console.error("❌ Server Error:", error);
+
     return response.status(500).json({
       message: error.message || error,
       error: true,
       success: false,
     });
+    
   }
 };
 
