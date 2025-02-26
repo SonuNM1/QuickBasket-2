@@ -14,14 +14,13 @@ export const GlobalContext = createContext(null);
 export const useGlobalContext = () => useContext(GlobalContext);
 
 const GlobalProvider = ({ children }) => {
-  
   const dispatch = useDispatch();
 
   const [totalPrice, setTotalPrice] = useState(0);
   const [notDiscountTotalPrice, setNotDiscountTotalPrice] = useState(0);
   const [totalQty, setTotalQty] = useState(0);
 
-  const [selectedVariation, setSelectedVariation] = useState(null) ; 
+  const [selectedVariation, setSelectedVariation] = useState(null);
 
   const cartItem = useSelector((state) => state.cartItem.cart);
   const user = useSelector((state) => state?.user);
@@ -29,10 +28,10 @@ const GlobalProvider = ({ children }) => {
   console.log("cart items", cartItem);
 
   const handleSelectVariation = (variation) => {
-    console.log('Variation selected in GlobalProvider: ', variation) ; 
+    console.log("Variation selected in GlobalProvider: ", variation);
 
-    setSelectedVariation(variation) ; 
-  }
+    setSelectedVariation(variation);
+  };
 
   const fetchCartItem = async () => {
     try {
@@ -100,7 +99,14 @@ const GlobalProvider = ({ children }) => {
     const tPrice = cartItem.reduce((preve, curr) => {
       const priceAfterDiscount = pricewithDiscount(
         curr?.productId?.price,
-        curr?.productId?.discount
+        curr?.productId?.discount || 0
+      );
+
+      console.log(
+        "global waal__________",
+        curr?.productId,
+        priceAfterDiscount,
+        curr.quantity
       );
 
       return preve + priceAfterDiscount * curr.quantity;
@@ -166,8 +172,8 @@ const GlobalProvider = ({ children }) => {
         totalQty,
         notDiscountTotalPrice,
         fetchOrder,
-        selectedVariation, 
-        handleSelectVariation   // function to update variation globally 
+        selectedVariation,
+        handleSelectVariation, // function to update variation globally
       }}
     >
       {children}

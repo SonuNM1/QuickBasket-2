@@ -6,7 +6,7 @@ import { executeQuery } from "../utils/DBUtils.js";
 export const addToCartItemController = async (request, response) => {
   try {
     const userId = request.userId;
-    const { productId, variationId, price } = request.body; // accept variation and price 
+    const { productId, variationId, price } = request.body; // accept variation and price
 
     console.log("🟡 Received Add to Cart request:");
     console.log("User ID:", userId);
@@ -32,7 +32,6 @@ export const addToCartItemController = async (request, response) => {
        AND (variation_id IS NULL OR variation_id = ?);`,
       [userId, productId, variationId]
     );
-   
 
     console.log("🔍 Cart Check Result:", checkItemCart);
 
@@ -48,9 +47,8 @@ export const addToCartItemController = async (request, response) => {
       "INSERT INTO cart_product (user_id, product_id, variation_id, quantity) VALUES (?, ?, ?, ?)",
       [userId, productId, variationId || null, 1]
     );
-    
 
-  console.log("🟢 Insert Success:", save);
+    console.log("🟢 Insert Success:", save);
 
     return response.json({
       data: save,
@@ -59,7 +57,6 @@ export const addToCartItemController = async (request, response) => {
       success: true,
     });
   } catch (error) {
-
     console.error("❌ Server Error:", error);
 
     return response.status(500).json({
@@ -67,7 +64,6 @@ export const addToCartItemController = async (request, response) => {
       error: true,
       success: false,
     });
-    
   }
 };
 
@@ -83,7 +79,7 @@ export const getCartItemController = async (request, response) => {
     // Fetch cart items with product details
     const cartItems = await executeQuery(
       `SELECT cp.id AS cart_item_id, cp.quantity, 
-                p.id AS product_id, p.name, p.price, p.description, p.image
+                p.id AS product_id, p.name, p.price, p.discount,p.description, p.image
          FROM cart_product cp
          JOIN products p ON cp.product_id = p.id
          WHERE cp.user_id = ?`,
@@ -100,6 +96,7 @@ export const getCartItemController = async (request, response) => {
         price: item.price,
         description: item.description,
         image: item.image,
+        discount: item.discount,
       },
     }));
 
