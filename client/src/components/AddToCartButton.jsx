@@ -8,25 +8,14 @@ import Loading from "./Loading";
 import { useSelector } from "react-redux";
 import { FaMinus, FaPlus } from "react-icons/fa6";
 
-const AddToCartButton = ({ data, selectedVariation }) => {
+const AddToCartButton = ({ data }) => {
 
-    console.log("🚀 Inside AddToCartButton:");
-    console.log("Product Data:", data);
-    console.log("Received Selected Variation:", selectedVariation);
-
-  const { fetchCartItem, updateCartItem, deleteCartItem } = useGlobalContext();
+  const { fetchCartItem, updateCartItem, deleteCartItem, selectedVariation } = useGlobalContext();
   const [loading, setLoading] = useState(false);
   const cartItem = useSelector((state) => state.cartItem.cart);
   const [isAvailableCart, setIsAvailableCart] = useState(false);
   const [qty, setQty] = useState(0);
   const [cartItemDetails, setCartItemsDetails] = useState();
-
-  const [variation, setVariation] = useState(selectedVariation) ; 
-
-  useEffect(() => {
-    console.log("✅ selectedVariation updated in AddToCartButton:", selectedVariation);
-    setVariation(selectedVariation);  // ✅ Update when prop changes
-  }, [selectedVariation]);
 
   const handleADDTocart = async (e) => {
     e.preventDefault();
@@ -40,11 +29,6 @@ const AddToCartButton = ({ data, selectedVariation }) => {
         console.error("❌ Product ID is missing!");
         return;
       }
-
-      // ✅ Log before checking variations
-      console.log("🟡................. Checking variations...");
-      console.log(".................Product Data:", data);
-      console.log(".............Selected Variation:", selectedVariation);
 
       // if variations exist, ensure a variation is selected
 
@@ -87,6 +71,7 @@ const AddToCartButton = ({ data, selectedVariation }) => {
   };
 
   //checking this item in cart or not
+  
   useEffect(() => {
     const checkingitem = cartItem.some(
       (item) => item.productId._id === data._id

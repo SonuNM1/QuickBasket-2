@@ -26,13 +26,15 @@ export const addToCartItemController = async (request, response) => {
     // Check if item is already in the cart
 
     const checkItemCart = await executeQuery(
-      "SELECT * FROM cart_product WHERE user_id = ? AND product_id = ? AND (variation_id IS NULL OR variation_id = ?)",
+      `SELECT * FROM cart_product 
+       WHERE user_id = ? 
+       AND product_id = ? 
+       AND (variation_id IS NULL OR variation_id = ?);`,
       [userId, productId, variationId]
     );
+   
 
     console.log("🔍 Cart Check Result:", checkItemCart);
-
-    
 
     if (checkItemCart.length > 0) {
       return response.status(400).json({
@@ -42,10 +44,11 @@ export const addToCartItemController = async (request, response) => {
 
     // Use variationId only if it's provided
 
-  const save = await executeQuery(
-  "INSERT INTO cart_product (user_id, product_id, variation_id, quantity) VALUES (?, ?, ?, ?)",
-  [userId, productId, variationId || null, 1]  // ✅ Allow `variationId` to be NULL
-  );
+    const save = await executeQuery(
+      "INSERT INTO cart_product (user_id, product_id, variation_id, quantity) VALUES (?, ?, ?, ?)",
+      [userId, productId, variationId || null, 1]
+    );
+    
 
   console.log("🟢 Insert Success:", save);
 

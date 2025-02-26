@@ -13,6 +13,7 @@ import { pricewithDiscount } from "../utils/PriceWithDiscount";
 import AddToCartButton from "../components/AddToCartButton";
 import UserRating from "./UserRating";
 import toast from "react-hot-toast";
+import { useGlobalContext } from "../provider/GlobalProvider";
 
 const ProductDisplayPage = () => {
   const params = useParams();
@@ -29,7 +30,8 @@ const ProductDisplayPage = () => {
   const [averageRating, setAverageRating] = useState(0);
 
   const [variations, setVariations] = useState([]);
-  const [selectedVariation, setSelectedVariation] = useState(null);
+
+  const {selectedVariation, handleSelectVariation} = useGlobalContext() ; 
 
   const imageContainer = useRef();
 
@@ -152,11 +154,6 @@ const ProductDisplayPage = () => {
       console.log("Error fetching average rating: ", error || error.message);
     }
   };
-
-  const handleSelectVariation = (variation) => {
-    console.log('Variation selected: ', variation) ; 
-    setSelectedVariation(variation) ; 
-  }
 
   console.log("product data", data);
 
@@ -289,7 +286,6 @@ const ProductDisplayPage = () => {
             <div className="flex gap-1 items-center">
               <AddToCartButton
                 data={data}
-                selectedVariation={selectedVariation}
               />
 
               {/* Wishlist button */}
