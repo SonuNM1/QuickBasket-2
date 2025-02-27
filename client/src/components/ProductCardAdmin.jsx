@@ -46,11 +46,10 @@ const ProductCardAdmin = ({ data, fetchProductData }) => {
                className='w-full h-full object-scale-down'
             />
         </div>
-        <p className='text-ellipsis line-clamp-2 font-medium'>{data?.name}</p>
-        <p className='text-slate-400'>{data?.unit}</p>
+        <p className='text-sm line-clamp-2 font-medium'>{data?.name}</p>
         <div className='grid grid-cols-2 gap-3 py-2'>
-          <button onClick={()=>setEditOpen(true)} className='border px-1 py-1 text-sm border-green-600 bg-green-100 text-green-800 hover:bg-green-200 rounded'>Edit</button>
-          <button onClick={()=>setOpenDelete(true)} className='border px-1 py-1 text-sm border-red-600 bg-red-100 text-red-600 hover:bg-red-200 rounded'>Delete</button>
+          <button onClick={()=>setEditOpen(true)} className='border px-1 py-1 text-xs border-green-600 bg-green-100 text-green-800 hover:bg-green-200 rounded'>Edit</button>
+          <button onClick={()=>setOpenDelete(true)} className='border px-1 py-1 text-xs border-red-600 bg-red-100 text-red-600 hover:bg-red-200 rounded'>Delete</button>
         </div>
 
         {
