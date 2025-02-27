@@ -20,8 +20,6 @@ const Header = () => {
   const user = useSelector((state) => state?.user);
   const [openUserMenu, setOpenUserMenu] = useState(false);
   const cartItem = useSelector((state) => state.cartItem.cart);
-  // const [totalPrice,setTotalPrice] = useState(0)
-  // const [totalQty,setTotalQty] = useState(0)
   const { totalPrice, totalQty } = useGlobalContext();
   const [openCartSection, setOpenCartSection] = useState(false);
 
@@ -38,31 +36,16 @@ const Header = () => {
       navigate("/login");
       return;
     }
-
     navigate("/user");
   };
 
-  //total item and total price
-  // useEffect(()=>{
-  //     const qty = cartItem.reduce((preve,curr)=>{
-  //         return preve + curr.quantity
-  //     },0)
-  //     setTotalQty(qty)
-
-  //     const tPrice = cartItem.reduce((preve,curr)=>{
-  //         return preve + (curr.productId.price * curr.quantity)
-  //     },0)
-  //     setTotalPrice(tPrice)
-
-  // },[cartItem])
-
   return (
-    <header className="h-24 lg:h-20 lg:shadow-md sticky top-0 z-40 flex flex-col justify-center gap-1 bg-white">
+    <header className="h-24 lg:h-20 lg:shadow-md sticky top-0 z-40 flex flex-col justify-center bg-white">
       {!(isSearchPage && isMobile) && (
         <div className="container mx-auto flex items-center px-2 justify-between">
-          {/**logo */}
+          {/* ✅ Logo (No Change for Large Screens, Adjusted for Mobile) */}
           <div className="h-full">
-            <Link to={"/"} className="h-full flex justify-center items-center">
+            <Link to={"/"} className="h-full flex items-center">
               <img
                 src={logo}
                 width={170}
@@ -73,21 +56,20 @@ const Header = () => {
               <img
                 src={logo}
                 width={120}
-                height={60}
+                height={50} // ⬅️ Reduced height only for mobile to fix spacing
                 alt="logo"
                 className="lg:hidden"
               />
             </Link>
           </div>
 
-          {/**Search */}
+          {/* ✅ Search Bar (Adjusted for Mobile) */}
           <div className="hidden lg:block">
             <Search />
           </div>
 
-          {/**login and my cart */}
-          <div className="">
-            {/**user icons display in only mobile version**/}
+          {/* ✅ Login & Cart Section (No Changes for Large Screens) */}
+          <div className="flex items-center gap-4">
             <button
               className="text-neutral-600 lg:hidden"
               onClick={handleMobileUser}
@@ -95,20 +77,16 @@ const Header = () => {
               <FaRegCircleUser size={26} />
             </button>
 
-            {/**Desktop**/}
-            <div className="hidden lg:flex  items-center gap-10">
+            {/* Desktop View (Kept Same) */}
+            <div className="hidden lg:flex items-center gap-10">
               {user?._id ? (
                 <div className="relative">
                   <div
-                    onClick={() => setOpenUserMenu((preve) => !preve)}
+                    onClick={() => setOpenUserMenu((prev) => !prev)}
                     className="flex select-none items-center gap-1 cursor-pointer"
                   >
                     <p>Account</p>
-                    {openUserMenu ? (
-                      <GoTriangleUp size={25} />
-                    ) : (
-                      <GoTriangleDown size={25} />
-                    )}
+                    {openUserMenu ? <GoTriangleUp size={25} /> : <GoTriangleDown size={25} />}
                   </div>
                   {openUserMenu && (
                     <div className="absolute right-0 top-12">
@@ -123,11 +101,12 @@ const Header = () => {
                   Login
                 </button>
               )}
+
+              {/* Cart Button (Kept Same) */}
               <button
                 onClick={() => setOpenCartSection(true)}
                 className="flex items-center gap-2 bg-green-800 hover:bg-green-700 px-3 py-2 rounded text-white"
               >
-                {/**add to card icons */}
                 <div className="animate-bounce">
                   <BsCart4 size={26} />
                 </div>
@@ -147,13 +126,12 @@ const Header = () => {
         </div>
       )}
 
-      <div className="container mx-auto px-2 lg:hidden">
+      {/* ✅ Fixed Mobile Search Bar Alignment */}
+      <div className="container mx-auto px-2 lg:hidden mt-[-10px]">
         <Search />
       </div>
 
-      {openCartSection && (
-        <DisplayCartItem close={() => setOpenCartSection(false)} />
-      )}
+      {openCartSection && <DisplayCartItem close={() => setOpenCartSection(false)} />}
     </header>
   );
 };

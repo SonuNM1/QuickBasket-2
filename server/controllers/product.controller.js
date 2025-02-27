@@ -176,27 +176,6 @@ export const getProductDetails = async (request, response) => {
       });
     }
 
-    // const query = `
-    //   SELECT
-    //     p.*,
-    //     (
-    //       SELECT JSON_ARRAYAGG(
-    //         JSON_OBJECT('_id', c.id, 'name', c.name)
-    //       )
-    //       FROM categories c
-    //       WHERE JSON_CONTAINS(p.category, JSON_QUOTE(CAST(c.id AS CHAR)), '$')
-    //     ) AS category_details,
-    //     (
-    //       SELECT JSON_ARRAYAGG(
-    //         JSON_OBJECT('_id', sc.id, 'name', sc.name)
-    //       )
-    //       FROM sub_categories sc
-    //       WHERE JSON_CONTAINS(p.subCategory, JSON_QUOTE(CAST(sc.id AS CHAR)), '$')
-    //     ) AS subCategory_details
-    //   FROM products p
-    //   WHERE p.id = ?
-    // `;
-
     const query = `
       SELECT 
   p.*, 
@@ -256,8 +235,13 @@ export const deleteProductDetails = async (request, response) => {
       });
     }
 
-    const query = `DELETE FROM products WHERE id = ?`;
-    const deleteResult = await executeQuery(query, [_id]);
+    // ✅ Delete product variations first
+
+    await executeQuery("DELETE FROM product_variations WHERE product_id = ?", [_id]);
+
+    // ✅ Delete the product
+    
+    const deleteResult = await executeQuery("DELETE FROM products WHERE id = ?", [_id]);
 
     return response.json({
       message: "Product deleted successfully",
@@ -331,57 +315,6 @@ export const searchProduct = async (request, response) => {
     });
   }
 };
-
-// export const getProductByCategoryAndSubCategory = async (request, response) => {
-//   try {
-//     const { categoryId, subCategoryId, page = 1, limit = 10 } = request.body;
-
-//     console.log("Fetching products for categoryId:", categoryId, "subCategoryId:", subCategoryId);
-
-//     if (!categoryId || !subCategoryId) {
-//       return response.status(400).json({
-//         message: "Provide categoryId and subCategoryId",
-//         error: true,
-//         success: false,
-//       });
-//     }
-
-//     const offset = (page - 1) * limit;
-
-//     const query = `
-//       SELECT * FROM products
-//       WHERE category = ? AND subCategory = ?
-//       ORDER BY created_at DESC
-//       LIMIT ? OFFSET ?
-//     `;
-
-//     const countQuery = `
-//       SELECT COUNT(*) AS totalCount FROM products
-//       WHERE category = ? AND subCategory = ?
-//     `;
-
-//     const [data, dataCount] = await Promise.all([
-//       executeQuery(query, [categoryId, subCategoryId, parseInt(limit), offset]),
-//       executeQuery(countQuery, [categoryId, subCategoryId]),
-//     ]);
-
-//     return response.json({
-//       message: "Product list",
-//       data: data,
-//       totalCount: dataCount[0]?.totalCount || 0,
-//       page: page,
-//       limit: limit,
-//       success: true,
-//       error: false,
-//     });
-//   } catch (error) {
-//     return response.status(500).json({
-//       message: error.message || error,
-//       error: true,
-//       success: false,
-//     });
-//   }
-// };
 
 export const getProductByCategoryAndSubCategory = async (request, response) => {
   try {
@@ -457,6 +390,112 @@ export const getProductByCategoryAndSubCategory = async (request, response) => {
   }
 };
 
+// export const getProductController = async (request, response) => {
+//   try {
+//     console.log("Fetching products...");
+
+//     let { page, limit, search, category, subCategory } = request.body;
+
+//     // Set default pagination values
+
+//     page = page ? parseInt(page) : 1;
+//     limit = limit ? parseInt(limit) : 10;
+//     const offset = (page - 1) * limit;
+
+//     // Prepare query conditions
+//     let conditions = [];
+//     let queryParams = [];
+
+//     // Search condition
+//     if (search) {
+//       conditions.push("(p.name LIKE ? OR p.description LIKE ?)");
+//       queryParams.push(`%${search}%`, `%${search}%`);
+//     }
+
+//     // Category filter
+//     if (category) {
+//       conditions.push("JSON_CONTAINS(p.category, ?, '$')");
+//       queryParams.push(JSON.stringify(category));
+//     }
+
+//     // SubCategory filter
+//     if (subCategory) {
+//       conditions.push("JSON_CONTAINS(p.subCategory, ?, '$')");
+//       queryParams.push(JSON.stringify(subCategory));
+//     }
+
+//     // Build WHERE clause dynamically
+//     let whereClause =
+//       conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+
+//     const query = `
+//     SELECT 
+//       p.*,
+//       COALESCE(
+//         (SELECT JSON_ARRAYAGG(
+//           JSON_OBJECT(
+//             'name', c.name,
+//             '_id', CAST(c.id AS CHAR)
+//           )
+//         ) 
+//         FROM categories c 
+//         WHERE JSON_CONTAINS(p.category, CAST(c.id AS CHAR), '$')
+//         ), 
+//         JSON_ARRAY()
+//       ) AS category,
+//       COALESCE(
+//         (SELECT JSON_ARRAYAGG(
+//           JSON_OBJECT(
+//             'name', sc.name,
+//             '_id', CAST(sc.id AS CHAR)
+//           )
+//         ) 
+//         FROM sub_categories sc 
+//         WHERE JSON_CONTAINS(p.subCategory, CAST(sc.id AS CHAR), '$')
+//         ), 
+//         JSON_ARRAY()
+//       ) AS subCategory
+//     FROM products AS p
+//     ${whereClause}
+//     GROUP BY p.id
+//     ORDER BY p.created_at DESC
+//     LIMIT ? OFFSET ?
+//   `;
+
+//     queryParams.push(limit, offset);
+
+//     // Fetch total count
+//     const countQuery = `
+//       SELECT COUNT(*) AS totalCount 
+//       FROM products p
+//       ${whereClause}
+//     `;
+
+//     const [data, totalCountResult] = await Promise.all([
+//       executeQuery(query, queryParams),
+//       executeQuery(countQuery, queryParams.slice(0, -2)), // Remove limit & offset from params
+//     ]);
+
+//     const totalCount = totalCountResult[0]?.totalCount || 0;
+
+//     return response.json({
+//       message: "Product data retrieved successfully",
+//       error: false,
+//       success: true,
+//       totalCount: totalCount,
+//       totalNoPage: Math.ceil(totalCount / limit),
+//       data: data,
+//     });
+//   } catch (error) {
+//     console.log(error);
+//     return response.status(500).json({
+//       message: error.message || error,
+//       error: true,
+//       success: false,
+//     });
+//   }
+// };
+
 export const getProductController = async (request, response) => {
   try {
     console.log("Fetching products...");
@@ -520,7 +559,20 @@ export const getProductController = async (request, response) => {
         WHERE JSON_CONTAINS(p.subCategory, CAST(sc.id AS CHAR), '$')
         ), 
         JSON_ARRAY()
-      ) AS subCategory
+      ) AS subCategory,
+      COALESCE(
+        (SELECT JSON_ARRAYAGG(
+          JSON_OBJECT(
+            'id', v.id,
+            'attribute', v.attribute,
+            'price', v.price
+          )
+        ) 
+        FROM product_variations v 
+        WHERE v.product_id = p.id
+        ), 
+        JSON_ARRAY()
+      ) AS variations
     FROM products AS p
     ${whereClause}
     GROUP BY p.id
@@ -562,9 +614,304 @@ export const getProductController = async (request, response) => {
   }
 };
 
+
+// export const updateProductDetails = async (request, response) => {
+//   try {
+//     const { _id, category, subCategory, variations, ...updateFields } = request.body;
+
+//     if (!_id) {
+//       return response.status(400).json({
+//         message: "Provide product _id",
+//         error: true,
+//         success: false,
+//       });
+//     }
+
+//     // Extract only `_id` values for category and subCategory
+
+//     const extractIds = (items) =>
+//       Array.isArray(items) ? items.map((item) => item.id).filter(Boolean) : [];
+
+//     // Construct update query dynamically
+
+//     const updateFieldsToSet = [];
+//     const values = [];
+
+//     if (updateFields.name) {
+//       updateFieldsToSet.push("`name` = ?");
+//       values.push(updateFields.name);
+//     }
+
+//     if (updateFields.image) {
+//       updateFieldsToSet.push("`image` = ?");
+//       values.push(JSON.stringify(updateFields.image));
+//     }
+
+//     if (category?.length) {
+//       updateFieldsToSet.push("`category` = ?");
+//       values.push(JSON.stringify(extractIds(category)));
+//     }
+
+//     if (subCategory?.length) {
+//       updateFieldsToSet.push("`subCategory` = ?");
+//       values.push(JSON.stringify(extractIds(subCategory)));
+//     }
+
+//     if (updateFields.unit) {
+//       updateFieldsToSet.push("`unit` = ?");
+//       values.push(updateFields.unit);
+//     }
+
+//     if (updateFields.stock) {
+//       updateFieldsToSet.push("`stock` = ?");
+//       values.push(updateFields.stock);
+//     }
+
+//     if (updateFields.price) {
+//       updateFieldsToSet.push("`price` = ?");
+//       values.push(updateFields.price);
+//     }
+
+//     if (updateFields.discount) {
+//       updateFieldsToSet.push("`discount` = ?");
+//       values.push(updateFields.discount);
+//     }
+
+//     if (updateFields.description) {
+//       updateFieldsToSet.push("`description` = ?");
+//       values.push(updateFields.description);
+//     }
+
+//     // If no valid fields to update, return an error
+
+//     if (updateFieldsToSet.length === 0 && !variations) {
+//       return response.status(400).json({
+//         message: "No valid fields to update",
+//         error: true,
+//         success: false,
+//       });
+//     }
+
+//     // Construct update query 
+
+//     if(updateFieldsToSet.length > 0){
+//       const updateQuery = `UPDATE products SET ${updateFieldsToSet.join(", ")} WHERE id = ?`;
+//       values.push(_id) ; 
+
+//       await executeQuery(updateQuery, values) ; 
+//     }
+
+//     // Update variations if provided 
+
+//     if(variations && Array.isArray(variations)){
+//       const existingVariations = await executeQuery(
+//         "SELECT id FROM product_variations WHERE product_id = ?",
+//         [_id]
+//       )
+
+//       const existingVariationIds = existingVariations.map((v) => v.id) ; 
+
+//       for(const variation of variations){
+//         const {id, price, option} = variation ; 
+
+//         if(!option || !price) continue ;  // skip invalid variations 
+
+
+//         if(id && existingVariationIds.includes(id)){
+
+//           // update existing variations 
+
+//           'UPDATE product_variations SET attribute = ?, price = ? WHERE id = ?',
+//           [option, parseFloat(price), id]
+//         }
+//         else{
+//           // insert new variation 
+//           await executeQuery(
+//             "INSERT INTO product_variations (product_id, attribute, price) VALUES (?, ?, ?)",
+//             [_id, option, parseFloat(price)]
+//           );
+//         }
+//       }
+
+//       // remove deleted variations 
+
+//       const newVariationIds = variations.map((v) => v.id).filter(Boolean) ; 
+//       const variationsToDelete = existingVariationIds.filter(
+//         (id) => !newVariationIds.includes(id)
+//       )
+
+//       if(variationsToDelete.length > 0){
+//         await executeQuery(
+//           `DELETE FROM product_variations WHERE id IN (${variationsToDelete
+//             .map(() => "?")
+//             .join(", ")})`,
+//           variationsToDelete
+//         );
+//       }
+
+//     }
+
+//     return response.json({
+//       message: "Product updated successfully",
+//       data: updateResult,
+//       error: false,
+//       success: true,
+//     });
+//   } catch (error) {
+//     console.error("Error updating product:", error);
+//     return response.status(500).json({
+//       message: error.message || error,
+//       error: true,
+//       success: false,
+//     });
+//   }
+// };
+
+
+// export const updateProductDetails1 = async (request, response) => {
+//     try {
+//         const { _id, category, subCategory, variations, ...updateFields } = request.body;
+
+//         if (!_id) {
+//             return response.status(400).json({
+//                 message: "Provide product _id",
+//                 error: true,
+//                 success: false,
+//             });
+//         }
+
+//         // Extract only `_id` values for category and subCategory
+//         const extractIds = (items) =>
+//             Array.isArray(items) ? items.map((item) => item.id).filter(Boolean) : [];
+
+//         // Construct update query dynamically
+//         const updateFieldsToSet = [];
+//         const values = [];
+
+//         if (updateFields.name) {
+//             updateFieldsToSet.push("`name` = ?");
+//             values.push(updateFields.name);
+//         }
+
+//         if (updateFields.image) {
+//             updateFieldsToSet.push("`image` = ?");
+//             values.push(JSON.stringify(updateFields.image));
+//         }
+
+//         if (category?.length) {
+//             updateFieldsToSet.push("`category` = ?");
+//             values.push(JSON.stringify(extractIds(category)));
+//         }
+
+//         if (subCategory?.length) {
+//             updateFieldsToSet.push("`subCategory` = ?");
+//             values.push(JSON.stringify(extractIds(subCategory)));
+//         }
+
+//         if (updateFields.unit) {
+//             updateFieldsToSet.push("`unit` = ?");
+//             values.push(updateFields.unit);
+//         }
+
+//         if (updateFields.stock) {
+//             updateFieldsToSet.push("`stock` = ?");
+//             values.push(updateFields.stock);
+//         }
+
+//         if (updateFields.price) {
+//             updateFieldsToSet.push("`price` = ?");
+//             values.push(updateFields.price);
+//         }
+
+//         if (updateFields.discount) {
+//             updateFieldsToSet.push("`discount` = ?");
+//             values.push(updateFields.discount);
+//         }
+
+//         if (updateFields.description) {
+//             updateFieldsToSet.push("`description` = ?");
+//             values.push(updateFields.description);
+//         }
+
+//         // If no valid fields to update, return an error
+//         if (updateFieldsToSet.length === 0 && !variations) {
+//             return response.status(400).json({
+//                 message: "No valid fields to update",
+//                 error: true,
+//                 success: false,
+//             });
+//         }
+
+//         // ✅ Fix: Store update result
+//         let updateResult = { affectedRows: 0 };
+
+//         if (updateFieldsToSet.length > 0) {
+//             const updateQuery = `UPDATE products SET ${updateFieldsToSet.join(", ")} WHERE id = ?`;
+//             values.push(_id);
+
+//             updateResult = await executeQuery(updateQuery, values); // ✅ Fix: Store result
+//         }
+
+//         // ✅ Fix: Update variations correctly
+//         if (variations && Array.isArray(variations)) {
+//             const existingVariations = await executeQuery(
+//                 "SELECT id FROM product_variations WHERE product_id = ?",
+//                 [_id]
+//             );
+
+//             const existingVariationIds = existingVariations.map((v) => v.id);
+
+//             for (const variation of variations) {
+//                 const { id, price, option } = variation;
+
+//                 if (!option || !price) continue; // ✅ Skip invalid variations
+
+//                 if (id && existingVariationIds.includes(id)) {
+//                     // ✅ Fix: Use executeQuery for updating existing variations
+//                     await executeQuery(
+//                         "UPDATE product_variations SET attribute = ?, price = ? WHERE id = ?",
+//                         [option, parseFloat(price), id]
+//                     );
+//                 } else {
+//                     // ✅ Insert new variation
+//                     await executeQuery(
+//                         "INSERT INTO product_variations (product_id, attribute, price) VALUES (?, ?, ?)",
+//                         [_id, option, parseFloat(price)]
+//                     );
+//                 }
+//             }
+
+//             // ✅ Remove deleted variations
+//             const newVariationIds = variations.map((v) => v.id).filter(Boolean);
+//             const variationsToDelete = existingVariationIds.filter((id) => !newVariationIds.includes(id));
+
+//             if (variationsToDelete.length > 0) {
+//                 await executeQuery(
+//                     `DELETE FROM product_variations WHERE id IN (${variationsToDelete.map(() => "?").join(", ")})`,
+//                     variationsToDelete
+//                 );
+//             }
+//         }
+
+//         return response.json({
+//             message: "Product updated successfully",
+//             data: updateResult, // ✅ Fix: Now updateResult is defined
+//             error: false,
+//             success: true,
+//         });
+//     } catch (error) {
+//         console.error("Error updating product:", error);
+//         return response.status(500).json({
+//             message: error.message || error,
+//             error: true,
+//             success: false,
+//         });
+//     }
+// };
+
 export const updateProductDetails = async (request, response) => {
   try {
-    const { _id, category, subCategory, ...updateFields } = request.body;
+    const { _id, category, subCategory, variations, ...updateFields } = request.body;
 
     if (!_id) {
       return response.status(400).json({
@@ -574,13 +921,10 @@ export const updateProductDetails = async (request, response) => {
       });
     }
 
-    // console.log("Request Body:", request.body);
-
-    // Extract only `_id` values for category and subCategory
+    // 🛠️ Extract only `_id` values for category and subCategory
     const extractIds = (items) =>
-      Array.isArray(items) ? items.map((item) => item.id).filter(Boolean) : [];
+      Array.isArray(items) ? items.map((item) => item._id).filter(Boolean) : [];
 
-    // Construct update query dynamically
     const updateFieldsToSet = [];
     const values = [];
 
@@ -591,17 +935,19 @@ export const updateProductDetails = async (request, response) => {
 
     if (updateFields.image) {
       updateFieldsToSet.push("`image` = ?");
-      values.push(JSON.stringify(updateFields.image));
+      values.push(JSON.stringify(updateFields.image)); // 🛠️ Convert image array to JSON
     }
 
-    if (category?.length) {
+    // 🛠️ Fix Category Update
+    if (category && Array.isArray(category)) {
       updateFieldsToSet.push("`category` = ?");
-      values.push(JSON.stringify(extractIds(category)));
+      values.push(JSON.stringify(extractIds(category))); // 🛠️ Store as JSON string
     }
 
-    if (subCategory?.length) {
+    // 🛠️ Fix SubCategory Update
+    if (subCategory && Array.isArray(subCategory)) {
       updateFieldsToSet.push("`subCategory` = ?");
-      values.push(JSON.stringify(extractIds(subCategory)));
+      values.push(JSON.stringify(extractIds(subCategory))); // 🛠️ Store as JSON string
     }
 
     if (updateFields.unit) {
@@ -629,28 +975,58 @@ export const updateProductDetails = async (request, response) => {
       values.push(updateFields.description);
     }
 
-    // If no valid fields to update, return an error
-    if (updateFieldsToSet.length === 0) {
-      return response.status(400).json({
-        message: "No valid fields to update",
-        error: true,
-        success: false,
-      });
+    if (updateFieldsToSet.length > 0) {
+      const updateQuery = `UPDATE products SET ${updateFieldsToSet.join(", ")} WHERE id = ?`;
+      values.push(_id);
+
+      await executeQuery(updateQuery, values);
     }
 
-    // Construct the final SQL query
-    const updateQuery = `UPDATE products SET ${updateFieldsToSet.join(
-      ", "
-    )} WHERE id = ?`;
-    values.push(_id);
+    // 🛠️ Update variations properly
+    if (variations && Array.isArray(variations)) {
+      const existingVariations = await executeQuery(
+        "SELECT id FROM product_variations WHERE product_id = ?",
+        [_id]
+      );
 
-    // console.log("Query:", updateQuery, "Values:", values);
+      const existingVariationIds = existingVariations.map((v) => v.id);
 
-    const updateResult = await executeQuery(updateQuery, values);
+      for (const variation of variations) {
+        const { id, price, option } = variation;
+
+        if (!option || !price) continue;
+
+        if (id && existingVariationIds.includes(id)) {
+          await executeQuery(
+            "UPDATE product_variations SET attribute = ?, price = ? WHERE id = ?",
+            [option, parseFloat(price), id]
+          );
+        } else {
+          await executeQuery(
+            "INSERT INTO product_variations (product_id, attribute, price) VALUES (?, ?, ?)",
+            [_id, option, parseFloat(price)]
+          );
+        }
+      }
+
+      // Remove deleted variations
+      const newVariationIds = variations.map((v) => v.id).filter(Boolean);
+      const variationsToDelete = existingVariationIds.filter(
+        (id) => !newVariationIds.includes(id)
+      );
+
+      if (variationsToDelete.length > 0) {
+        await executeQuery(
+          `DELETE FROM product_variations WHERE id IN (${variationsToDelete
+            .map(() => "?")
+            .join(", ")})`,
+          variationsToDelete
+        );
+      }
+    }
 
     return response.json({
-      message: "Updated successfully",
-      data: updateResult,
+      message: "Product updated successfully",
       error: false,
       success: true,
     });

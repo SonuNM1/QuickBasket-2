@@ -166,7 +166,7 @@ const ProductDisplayPage = () => {
   return (
     <section className="container mx-auto p-4 grid lg:grid-cols-2">
 
-      {/* product image and review  */}
+      {/* Product Name, Price, Add Button, Wishlist Button (Now comes first in mobile)   */}
 
       <div className="">
         <div className="relative bg-white lg:min-h-[65vh] lg:max-h-[65vh] rounded min-h-56 max-h-56 h-full w-full">
@@ -378,6 +378,7 @@ const ProductDisplayPage = () => {
         </div>
       </div>
     </section>
+
   );
 };
 
