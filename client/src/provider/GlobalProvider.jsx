@@ -14,14 +14,13 @@ export const GlobalContext = createContext(null);
 export const useGlobalContext = () => useContext(GlobalContext);
 
 const GlobalProvider = ({ children }) => {
-  
   const dispatch = useDispatch();
 
   const [totalPrice, setTotalPrice] = useState(0);
   const [notDiscountTotalPrice, setNotDiscountTotalPrice] = useState(0);
   const [totalQty, setTotalQty] = useState(0);
 
-  const [selectedVariation, setSelectedVariation] = useState(null) ; 
+  const [selectedVariation, setSelectedVariation] = useState(null);
 
   const cartItem = useSelector((state) => state.cartItem.cart);
   const user = useSelector((state) => state?.user);
@@ -29,10 +28,10 @@ const GlobalProvider = ({ children }) => {
   console.log("cart items", cartItem);
 
   const handleSelectVariation = (variation) => {
-    console.log('Variation selected in GlobalProvider: ', variation) ; 
+    console.log("Variation selected in GlobalProvider: ", variation);
 
-    setSelectedVariation(variation) ; 
-  }
+    setSelectedVariation(variation);
+  };
 
   const fetchCartItem = async () => {
     try {
@@ -51,6 +50,16 @@ const GlobalProvider = ({ children }) => {
   };
 
   const updateCartItem = async (id, qty) => {
+    console.log("______________________updating", id, qty);
+
+    if (qty == 0) {
+      if (confirm("you want to remove the item ?")) {
+        deleteCartItem(id);
+        return;
+      } else {
+        return;
+      }
+    }
     try {
       const response = await Axios({
         ...SummaryApi.updateCartItemQty,
@@ -166,8 +175,8 @@ const GlobalProvider = ({ children }) => {
         totalQty,
         notDiscountTotalPrice,
         fetchOrder,
-        selectedVariation, 
-        handleSelectVariation   // function to update variation globally 
+        selectedVariation,
+        handleSelectVariation, // function to update variation globally
       }}
     >
       {children}
