@@ -77,7 +77,6 @@ const Search = () => {
                             />
                      </div>
                 ) : (
-                    //when i was search page
                     <div className='w-full h-full'>
                         <input
                             type='text'

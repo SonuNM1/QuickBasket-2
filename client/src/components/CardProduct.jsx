@@ -48,7 +48,9 @@ const CardProduct = ({ data, removeProduct }) => {
 
   const checkIfWishlisted = async () => {
     try {
-      const response = await Axios(SummaryApi.fetchUserWishlist);
+      const response = await Axios({
+        ...SummaryApi.fetchUserWishlist,
+      });
 
       const wishlistedItems = response.data.data || [];
 
@@ -135,6 +137,7 @@ const CardProduct = ({ data, removeProduct }) => {
       </div>
 
       {/* Product Image */}
+
       <div className="min-h-20 w-full max-h-24 lg:max-h-32 rounded overflow-hidden">
         <img
           src={data.image[0]}
@@ -144,15 +147,12 @@ const CardProduct = ({ data, removeProduct }) => {
 
       {/* Discount Label + Rating */}
 
-      <div className="flex items-center gap-6 px-2 lg:px-0">
+      <div className="flex items-center gap-2 px-2 lg:px-0 sm:gap-1 sm:flex-wrap">
         {Boolean(data.discount) && (
-          <p className="text-green-600 bg-green-100 px-2 w-fit text-xs rounded-full">
-            {/* {data.discount}% discount */}
-            {Math.round(data.discount)}% discount
+          <p className="text-green-600 bg-green-100 px-2 text-xs rounded-full">
+            {Math.round(data.discount)}% Off
           </p>
         )}
-
-        {/* Average rating */}
 
         {averageRating && (
           <div className="bg-black px-2 rounded-full flex items-center gap-1 text-yellow-500 font-semibold text-xs">
@@ -175,13 +175,12 @@ const CardProduct = ({ data, removeProduct }) => {
 
       {/* Price & Stock */}
 
-      <div className="px-2 lg:px-0 flex items-center justify-between gap-1 lg:gap-3 text-sm lg:text-base">
-        <div className="flex items-center gap-1">
-          <div className="font-semibold">
-            {DisplayPriceInRupees(pricewithDiscount(data.price, data.discount))}
-          </div>
+      <div className="px-2 lg:px-0 flex items-center justify-between gap-1 lg:gap-3 text-sm lg:text-base sm:flex-wrap">
+        <div className="font-semibold">
+          {DisplayPriceInRupees(pricewithDiscount(data.price, data.discount))}
         </div>
-        <div>
+
+        <div className="flex-shrink-0">
           {data.stock == 0 ? (
             <p className="text-red-500 text-sm text-center">Out of stock</p>
           ) : (

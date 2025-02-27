@@ -14,32 +14,59 @@ const ProductAdmin = () => {
   const [totalPageCount,setTotalPageCount] = useState(1)
   const [search,setSearch] = useState("")
   
-  const fetchProductData = async()=>{
-    try {
-        setLoading(true)
-        const response = await Axios({
-           ...SummaryApi.getProduct,
-           data : {
-              page : page,
-              limit : 12,
-              search : search 
-           }
-        })
+  // const fetchProductData = async()=>{
+  //   try {
+  //       setLoading(true)
+  //       const response = await Axios({
+  //          ...SummaryApi.getProduct,
+  //          data : {
+  //             page : page,
+  //             limit : 12,
+  //             search : search 
+  //          }
+  //       })
 
-        const { data : responseData } = response 
+  //       const { data : responseData } = response 
 
-        if(responseData.success){
-          setTotalPageCount(responseData.totalNoPage)
-          setProductData(responseData.data)
-        }
+  //       if(responseData.success){
+  //         setTotalPageCount(responseData.totalNoPage)
+  //         setProductData(responseData.data)
+  //       }
 
-    } catch (error) {
-      AxiosToastError(error)
-    }finally{
-      setLoading(false)
-    }
-  }
+  //   } catch (error) {
+  //     AxiosToastError(error)
+  //   }finally{
+  //     setLoading(false)
+  //   }
+  // }
   
+  const fetchProductData = async () => {
+    try {
+      setLoading(true);
+      const response = await Axios({
+        ...SummaryApi.getProduct,
+        data: {
+          page: page,
+          limit: 12,
+          search: search,
+        },
+      });
+  
+      const { data: responseData } = response;
+      console.log("📢 Product API Response:", responseData);
+  
+      if (responseData.success) {
+        setTotalPageCount(responseData.totalNoPage);
+        setProductData(responseData.data); // ✅ Ensure variations are stored
+      }
+    } catch (error) {
+      AxiosToastError(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+
   useEffect(()=>{
     fetchProductData()
   },[page])

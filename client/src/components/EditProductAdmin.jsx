@@ -6,7 +6,6 @@ import ViewImage from "../components/ViewImage";
 import { MdDelete } from "react-icons/md";
 import { useSelector } from "react-redux";
 import { IoClose } from "react-icons/io5";
-import AddFieldComponent from "../components/AddFieldComponent";
 import Axios from "../utils/Axios";
 import SummaryApi from "../common/SummaryApi";
 import AxiosToastError from "../utils/AxiosToastError";
@@ -14,6 +13,9 @@ import successAlert from "../utils/SuccessAlert";
 import { useEffect } from "react";
 
 const EditProductAdmin = ({ close, data: propsData, fetchProductData }) => {
+
+  console.log("🔍 propsData received in EditProductAdmin:", propsData);
+
   const [data, setData] = useState({
     _id: propsData._id,
     name: propsData.name,
@@ -25,17 +27,17 @@ const EditProductAdmin = ({ close, data: propsData, fetchProductData }) => {
     price: propsData.price,
     discount: propsData.discount,
     description: propsData.description,
-    more_details: propsData.more_details || {},
+    variations: propsData.variations || [],
   });
+
+  console.log("✅ Initialized State Data:", data);
+
   const [imageLoading, setImageLoading] = useState(false);
   const [ViewImageURL, setViewImageURL] = useState("");
   const allCategory = useSelector((state) => state.product.allCategory);
   const [selectCategory, setSelectCategory] = useState("");
   const [selectSubCategory, setSelectSubCategory] = useState("");
   const allSubCategory = useSelector((state) => state.product.allSubCategory);
-
-  const [openAddField, setOpenAddField] = useState(false);
-  const [fieldName, setFieldName] = useState("");
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -46,6 +48,35 @@ const EditProductAdmin = ({ close, data: propsData, fetchProductData }) => {
         [name]: value,
       };
     });
+  };
+
+  // add variation
+
+  const handleAddVariation = () => {
+    setData((prev) => ({
+      ...prev,
+      variations: [...prev.variations, { option: "", price: "" }],
+    }));
+  };
+
+  // Update variation fields
+
+  const handleVariationChange = (index, key, value) => {
+    const updatedVariations = [...data.variations];
+    updatedVariations[index][key] = value;
+    setData((prev) => ({
+      ...prev,
+      variations: updatedVariations,
+    }));
+  };
+
+  //  Remove Variation
+
+  const handleRemoveVariation = (index) => {
+    setData((prev) => ({
+      ...prev,
+      variations: prev.variations.filter((_, i) => i !== index),
+    }));
   };
 
   const handleUploadImage = async (e) => {
@@ -85,6 +116,7 @@ const EditProductAdmin = ({ close, data: propsData, fetchProductData }) => {
       };
     });
   };
+
   const handleRemoveSubCategory = async (index) => {
     data.subCategory.splice(index, 1);
     setData((preve) => {
@@ -94,21 +126,8 @@ const EditProductAdmin = ({ close, data: propsData, fetchProductData }) => {
     });
   };
 
-  const handleAddField = () => {
-    setData((preve) => {
-      return {
-        ...preve,
-        more_details: {
-          ...preve.more_details,
-          [fieldName]: "",
-        },
-      };
-    });
-    setFieldName("");
-    setOpenAddField(false);
-  };
-
   const handleSubmit = async (e) => {
+
     e.preventDefault();
     console.log("data", data);
 
@@ -135,7 +154,7 @@ const EditProductAdmin = ({ close, data: propsData, fetchProductData }) => {
           price: "",
           discount: "",
           description: "",
-          more_details: {},
+          variations: []
         });
       }
     } catch (error) {
@@ -154,7 +173,10 @@ const EditProductAdmin = ({ close, data: propsData, fetchProductData }) => {
             </button>
           </div>
           <div className="grid p-3">
+
             <form className="grid gap-4" onSubmit={handleSubmit}>
+              {/* Name */}
+
               <div className="grid gap-1">
                 <label htmlFor="name" className="font-medium">
                   Name
@@ -170,6 +192,9 @@ const EditProductAdmin = ({ close, data: propsData, fetchProductData }) => {
                   className="bg-blue-50 p-2 outline-none border focus-within:border-primary-200 rounded"
                 />
               </div>
+
+              {/* Description */}
+
               <div className="grid gap-1">
                 <label htmlFor="description" className="font-medium">
                   Description
@@ -187,6 +212,9 @@ const EditProductAdmin = ({ close, data: propsData, fetchProductData }) => {
                   className="bg-blue-50 p-2 outline-none border focus-within:border-primary-200 rounded resize-none"
                 />
               </div>
+
+              {/* Image */}
+
               <div>
                 <p className="font-medium">Image</p>
                 <div>
@@ -238,6 +266,9 @@ const EditProductAdmin = ({ close, data: propsData, fetchProductData }) => {
                   </div>
                 </div>
               </div>
+
+              {/* Category */}
+
               <div className="grid gap-1">
                 <label className="font-medium">Category</label>
                 <div>
@@ -284,6 +315,9 @@ const EditProductAdmin = ({ close, data: propsData, fetchProductData }) => {
                   </div>
                 </div>
               </div>
+
+              {/* Sub Category */}
+
               <div className="grid gap-1">
                 <label className="font-medium">Sub Category</label>
                 <div>
@@ -333,6 +367,8 @@ const EditProductAdmin = ({ close, data: propsData, fetchProductData }) => {
                 </div>
               </div>
 
+              {/* Unit */}
+
               <div className="grid gap-1">
                 <label htmlFor="unit" className="font-medium">
                   Unit
@@ -348,6 +384,8 @@ const EditProductAdmin = ({ close, data: propsData, fetchProductData }) => {
                   className="bg-blue-50 p-2 outline-none border focus-within:border-primary-200 rounded"
                 />
               </div>
+
+              {/* Number of stock */}
 
               <div className="grid gap-1">
                 <label htmlFor="stock" className="font-medium">
@@ -365,6 +403,8 @@ const EditProductAdmin = ({ close, data: propsData, fetchProductData }) => {
                 />
               </div>
 
+              {/* Price */}
+
               <div className="grid gap-1">
                 <label htmlFor="price" className="font-medium">
                   Price
@@ -380,6 +420,8 @@ const EditProductAdmin = ({ close, data: propsData, fetchProductData }) => {
                   className="bg-blue-50 p-2 outline-none border focus-within:border-primary-200 rounded"
                 />
               </div>
+
+              {/* Discount */}
 
               <div className="grid gap-1">
                 <label htmlFor="discount" className="font-medium">
@@ -397,41 +439,96 @@ const EditProductAdmin = ({ close, data: propsData, fetchProductData }) => {
                 />
               </div>
 
-              {/**add more field**/}
-              {Object?.keys(data?.more_details)?.map((k, index) => {
-                return (
-                  <div className="grid gap-1">
-                    <label htmlFor={k} className="font-medium">
-                      {k}
-                    </label>
-                    <input
-                      id={k}
-                      type="text"
-                      value={data?.more_details[k]}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        setData((preve) => {
-                          return {
-                            ...preve,
-                            more_details: {
-                              ...preve.more_details,
-                              [k]: value,
-                            },
-                          };
-                        });
-                      }}
-                      required
-                      className="bg-blue-50 p-2 outline-none border focus-within:border-primary-200 rounded"
-                    />
-                  </div>
-                );
-              })}
+              {/* Variation section */}
 
-              <div
-                onClick={() => setOpenAddField(true)}
-                className=" hover:bg-primary-200 bg-white py-1 px-3 w-32 text-center font-semibold border border-primary-200 hover:text-neutral-900 cursor-pointer rounded"
-              >
-                Add Fields
+              {/* <div>
+                <label className="font-medium">Product Variations</label>
+                {
+                  data.variations.map((variation, index) =>(
+                    <div
+                      key={index}
+                      className="flex gap-3 items-center"
+                    >
+                      <input
+                        type="text"
+                        placeholder="Size (S, M, L)"
+                        value={variation.option}
+                        onChange={(e) => handleVariationChange(index, "option", e.target.value)}
+                        className="border p-2 rounded w-1/2"
+                        required
+                      />
+                      <input
+                        type="number"
+                        placeholder="Price"
+                        value={variation.price}
+                        onChange={(e) => handleVariationChange(index, "price", e.target.value)}
+                        className="border p-2 rounded w-1/2"
+                        required
+                      />
+                      <button
+                        type="button"
+                        className="bg-red-500 text-white px-2 py-1 rounded"
+                        onClick={() => handleRemoveVariation(index)}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))
+                }
+                <button
+                  type="button"
+                  onClick={handleAddVariation}
+                  className="bg-blue-500 text-white px-4 py-2 mt-2 rounded"
+                >
+                  Add Variation 
+                </button>
+              </div> */}
+
+              <div>
+                <label className="font-medium">Product Variations</label>
+                {data.variations.length > 0 ? (
+                  data.variations.map((variation, index) => (
+                    <div key={index} className="flex gap-3 items-center">
+                      <input
+                        type="text"
+                        placeholder={variation.attribute || 'Enter Variation Name'}
+                        value={variation.option || '' }
+                        onChange={(e) =>
+                          handleVariationChange(index, "option", e.target.value)
+                        }
+                        className="border p-2 rounded w-1/2"
+                        required
+                      />
+                      <input
+                        type="number"
+                        placeholder="Price"
+                        value={variation.price}
+                        onChange={(e) =>
+                          handleVariationChange(index, "price", e.target.value)
+                        }
+                        className="border p-2 rounded w-1/2"
+                        required
+                      />
+                      <button
+                        type="button"
+                        className="bg-red-500 text-white px-2 py-1 rounded"
+                        onClick={() => handleRemoveVariation(index)}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-500">No variations added yet.</p>
+                )}
+
+                <button
+                  type="button"
+                  onClick={handleAddVariation}
+                  className="bg-blue-500 text-white px-4 py-2 mt-2 rounded"
+                >
+                  + Add Variation
+                </button>
               </div>
 
               <button className="bg-primary-100 hover:bg-primary-200 py-2 rounded font-semibold">
@@ -442,15 +539,6 @@ const EditProductAdmin = ({ close, data: propsData, fetchProductData }) => {
 
           {ViewImageURL && (
             <ViewImage url={ViewImageURL} close={() => setViewImageURL("")} />
-          )}
-
-          {openAddField && (
-            <AddFieldComponent
-              value={fieldName}
-              onChange={(e) => setFieldName(e.target.value)}
-              submit={handleAddField}
-              close={() => setOpenAddField(false)}
-            />
           )}
         </section>
       </div>

@@ -71,7 +71,7 @@ function App() {
   return (
     <GlobalProvider> 
       <Header/>
-      <main className='min-h-[78vh]'>
+      <main className='mt-10 min-h-[78vh]'>
           <Outlet/>
       </main>
       <Footer/>
