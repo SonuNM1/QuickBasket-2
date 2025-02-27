@@ -31,7 +31,7 @@ const ProductDisplayPage = () => {
 
   const [variations, setVariations] = useState([]);
 
-  const {selectedVariation, handleSelectVariation} = useGlobalContext() ; 
+  const { selectedVariation, handleSelectVariation } = useGlobalContext();
 
   const imageContainer = useRef();
 
@@ -161,11 +161,10 @@ const ProductDisplayPage = () => {
 
   useEffect(() => {
     console.log("🔄 Updated selectedVariation:", selectedVariation);
-}, [selectedVariation]);
+  }, [selectedVariation]);
 
   return (
     <section className="container mx-auto p-4 grid lg:grid-cols-2">
-
       {/* product image and review  */}
 
       <div className="">
@@ -284,9 +283,7 @@ const ProductDisplayPage = () => {
         ) : (
           <div className="my-4">
             <div className="flex gap-1 items-center">
-              <AddToCartButton
-                data={data}
-              />
+              <AddToCartButton data={data} />
 
               {/* Wishlist button */}
 
@@ -330,7 +327,8 @@ const ProductDisplayPage = () => {
                           : "bg-gray-200 text-black hover:bg-green-500 hover:text-white"
                       }`}
                     >
-                      {variation.attribute} - {" "} {DisplayPriceInRupees(variation.price)}
+                      {variation.attribute} -{" "}
+                      {DisplayPriceInRupees(variation.price)}
                     </button>
                   ))}
                 </div>

@@ -5,7 +5,6 @@ import { useGlobalContext } from "../provider/GlobalProvider";
 import { DisplayPriceInRupees } from "../utils/DisplayPriceInRupees";
 import { FaCaretRight } from "react-icons/fa";
 import { useSelector } from "react-redux";
-import AddToCartButton from "./AddToCartButton";
 import { pricewithDiscount } from "../utils/PriceWithDiscount";
 import imageEmpty from "../assets/empty_cart.webp";
 import toast from "react-hot-toast";
@@ -25,6 +24,12 @@ const DisplayCartItem = ({ close }) => {
       return;
     }
     toast("Please Login");
+  };
+
+  const { updateCartItem } = useGlobalContext();
+
+  const handleQuantity = (cid, qty) => {
+    updateCartItem(cid, qty);
   };
   return (
     <section className="bg-neutral-900 fixed top-0 bottom-0 right-0 left-0 bg-opacity-70 z-50">
@@ -80,7 +85,26 @@ const DisplayCartItem = ({ close }) => {
                           </p>
                         </div>
                         <div>
-                          <AddToCartButton data={item?.productId} />
+                          <div className="flex items-center gap-2 mt-2">
+                            <button
+                              className="px-2 py-1 bg-red-500 text-white rounded"
+                              onClick={() => {
+                                handleQuantity(item._id, item.quantity - 1);
+                              }}
+                            >
+                              -
+                            </button>
+                            <span>{item.quantity}</span>
+                            <button
+                              className="px-2 py-1 bg-green-500 text-white rounded"
+                              onClick={() => {
+                                handleQuantity(item._id, item.quantity + 1);
+                              }}
+                            >
+                              +
+                            </button>
+                          </div>
+                          {/* <AddToCartButton data={item?.productId} /> */}
                         </div>
                       </div>
                     );

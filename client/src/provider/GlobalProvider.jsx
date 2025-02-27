@@ -50,6 +50,16 @@ const GlobalProvider = ({ children }) => {
   };
 
   const updateCartItem = async (id, qty) => {
+    console.log("______________________updating", id, qty);
+
+    if (qty == 0) {
+      if (confirm("you want to remove the item ?")) {
+        deleteCartItem(id);
+        return;
+      } else {
+        return;
+      }
+    }
     try {
       const response = await Axios({
         ...SummaryApi.updateCartItemQty,
@@ -99,14 +109,7 @@ const GlobalProvider = ({ children }) => {
     const tPrice = cartItem.reduce((preve, curr) => {
       const priceAfterDiscount = pricewithDiscount(
         curr?.productId?.price,
-        curr?.productId?.discount || 0
-      );
-
-      console.log(
-        "global waal__________",
-        curr?.productId,
-        priceAfterDiscount,
-        curr.quantity
+        curr?.productId?.discount
       );
 
       return preve + priceAfterDiscount * curr.quantity;

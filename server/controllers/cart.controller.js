@@ -126,7 +126,7 @@ export const getCartItemController = async (request, response) => {
       `SELECT 
           cp.id AS cart_item_id, 
           cp.quantity, 
-          cp.variation_id, 
+          cp.variation_id as vid, 
           p.id AS product_id, 
           p.name, 
           p.description, 
@@ -151,6 +151,7 @@ export const getCartItemController = async (request, response) => {
         description: item.description,
         image: item.image,
         discount: item.discount,
+        vid: item?.vid,
       },
     }));
 
@@ -171,11 +172,12 @@ export const getCartItemController = async (request, response) => {
 
 /**
  * Update Cart Item Quantity
- */
-export const updateCartItemQtyController = async (request, response) => {
+ */ export const updateCartItemQtyController = async (request, response) => {
   try {
     const userId = request.userId;
-    const { _id, qty } = request.body;
+    const { _id, qty, vid } = request.body;
+
+    console.log("__________", [qty, _id, userId]);
 
     if (!_id || !qty) {
       return response.status(400).json({
@@ -183,10 +185,11 @@ export const updateCartItemQtyController = async (request, response) => {
       });
     }
 
-    const updateCartItem = await executeQuery(
-      "UPDATE cart_product SET quantity = ? WHERE id = ? AND user_id = ?",
-      [qty, _id, userId]
-    );
+    const query = `UPDATE cart_product SET quantity = ? WHERE id = ? AND  user_id = ?`;
+
+    const values = [qty, _id, userId];
+
+    const updateCartItem = await executeQuery(query, values);
 
     return response.json({
       message: "Cart updated",
